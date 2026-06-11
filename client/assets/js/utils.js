@@ -121,7 +121,9 @@ Utils.formatRelativeDate = (dateString) => {
 };
 
 // Initialisation automatique de la responsivité mobile sur tous les écrans
-document.addEventListener('DOMContentLoaded', () => {
+const initMobileResponsiveness = () => {
+    console.log("✨ EduNet BJ : Initialisation de la responsivité mobile (v1.2)...");
+
     // 1. Injection des styles CSS nécessaires au tiroir de navigation mobile
     const style = document.createElement('style');
     style.innerHTML = `
@@ -185,10 +187,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (aside && mobileMenuBtn) {
         aside.classList.add('mobile-drawer');
 
-        // Créer l'overlay
-        const backdrop = document.createElement('div');
-        backdrop.className = 'mobile-backdrop';
-        document.body.appendChild(backdrop);
+        // Éviter de rajouter l'overlay s'il existe déjà
+        let backdrop = document.querySelector('.mobile-backdrop');
+        if (!backdrop) {
+            backdrop = document.createElement('div');
+            backdrop.className = 'mobile-backdrop';
+            document.body.appendChild(backdrop);
+        }
 
         const openMenu = () => {
             aside.classList.add('open');
@@ -232,4 +237,10 @@ document.addEventListener('DOMContentLoaded', () => {
             wrapper.appendChild(table);
         }
     });
-});
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMobileResponsiveness);
+} else {
+    initMobileResponsiveness();
+}
