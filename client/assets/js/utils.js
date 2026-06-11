@@ -122,47 +122,14 @@ Utils.formatRelativeDate = (dateString) => {
 
 // Initialisation automatique de la responsivité mobile sur tous les écrans
 const initMobileResponsiveness = () => {
-    console.log("✨ EduNet BJ : Initialisation de la responsivité mobile (v1.2)...");
+    console.log("✨ EduNet BJ : Initialisation de la responsivité mobile (v1.3)...");
 
-    // 1. Injection des styles CSS nécessaires au tiroir de navigation mobile
-    const style = document.createElement('style');
-    style.innerHTML = `
-      @media (max-w: 767px) {
-        aside.mobile-drawer {
-          position: fixed !important;
-          top: 0 !important;
-          bottom: 0 !important;
-          left: 0 !important;
-          z-index: 9999 !important;
-          transform: translateX(-100%) !important;
-          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-          display: flex !important;
-        }
-        aside.mobile-drawer.open {
-          transform: translateX(0) !important;
-          box-shadow: 10px 0 30px rgba(15, 28, 63, 0.25) !important;
-        }
-        .mobile-backdrop {
-          position: fixed !important;
-          inset: 0 !important;
-          background-color: rgba(15, 28, 63, 0.4) !important;
-          backdrop-filter: blur(4px) !important;
-          -webkit-backdrop-filter: blur(4px) !important;
-          z-index: 9998 !important;
-          opacity: 0;
-          transition: opacity 0.3s ease-in-out !important;
-          pointer-events: none;
-        }
-        .mobile-backdrop.active {
-          opacity: 1;
-          pointer-events: auto;
-        }
-      }
-    `;
-    document.head.appendChild(style);
-
-    // 2. Vérification et injection dynamique du bouton hamburger si manquant
+    const aside = document.querySelector('aside');
     const header = document.querySelector('main > header');
+
+    if (!aside) return;
+
+    // 1. Vérification et injection dynamique du bouton hamburger si manquant dans le header
     if (header) {
         let mobileMenuBtn = header.querySelector('#mobileMenuBtn');
         if (!mobileMenuBtn) {
@@ -174,59 +141,111 @@ const initMobileResponsiveness = () => {
                 mobileMenuBtn.innerHTML = '<i data-lucide="menu" class="w-6 h-6"></i>';
                 container.insertBefore(mobileMenuBtn, container.firstChild);
                 if (window.lucide) {
-                    window.lucide.createIcons();
+                    try { window.lucide.createIcons(); } catch(e) {}
                 }
             }
         }
     }
 
-    // 3. Configuration du tiroir mobile et de l'overlay
-    const aside = document.querySelector('aside');
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    if (!mobileMenuBtn) return;
 
-    if (aside && mobileMenuBtn) {
-        aside.classList.add('mobile-drawer');
-
-        // Éviter de rajouter l'overlay s'il existe déjà
-        let backdrop = document.querySelector('.mobile-backdrop');
-        if (!backdrop) {
-            backdrop = document.createElement('div');
-            backdrop.className = 'mobile-backdrop';
-            document.body.appendChild(backdrop);
-        }
-
-        const openMenu = () => {
-            aside.classList.add('open');
-            backdrop.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        };
-
-        const closeMenu = () => {
-            aside.classList.remove('open');
-            backdrop.classList.remove('active');
-            document.body.style.overflow = '';
-        };
-
-        // Cloner le bouton pour supprimer d'éventuels listeners statiques (ex: l'ancien toast de démo)
-        const activeBtn = mobileMenuBtn.cloneNode(true);
-        mobileMenuBtn.parentNode.replaceChild(activeBtn, mobileMenuBtn);
-
-        activeBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (aside.classList.contains('open')) {
-                closeMenu();
-            } else {
-                openMenu();
-            }
-        });
-
-        backdrop.addEventListener('click', closeMenu);
-
-        // Fermer le menu au clic sur n'importe quel lien interne
-        aside.querySelectorAll('nav a').forEach(link => {
-            link.addEventListener('click', closeMenu);
-        });
+    // 2. Création et configuration de l'overlay (backdrop) en JS inline
+    let backdrop = document.querySelector('.mobile-backdrop');
+    if (!backdrop) {
+        backdrop = document.createElement('div');
+        backdrop.className = 'mobile-backdrop';
+        backdrop.style.position = 'fixed';
+        backdrop.style.inset = '0';
+        backdrop.style.backgroundColor = 'rgba(15, 28, 63, 0.4)';
+        backdrop.style.backdropFilter = 'blur(4px)';
+        backdrop.style.webkitBackdropFilter = 'blur(4px)';
+        backdrop.style.zIndex = '9998';
+        backdrop.style.opacity = '0';
+        backdrop.style.pointerEvents = 'none';
+        backdrop.style.transition = 'opacity 0.3s ease-in-out';
+        document.body.appendChild(backdrop);
     }
+
+    // 3. Application des styles JS inline sur l'aside pour le mode mobile
+    const applyMobileStyles = () => {
+        if (window.innerWidth < 768) {
+            aside.style.setProperty('position', 'fixed', 'important');
+            aside.style.setProperty('top', '0', 'important');
+            aside.style.setProperty('bottom', '0', 'important');
+            aside.style.setProperty('left', '0', 'important');
+            aside.style.setProperty('z-index', '9999', 'important');
+            aside.style.setProperty('width', '260px', 'important');
+            aside.style.setProperty('display', 'flex', 'important');
+            aside.style.setProperty('flex-direction', 'column', 'important');
+            aside.style.setProperty('transition', 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 'important');
+            
+            if (!aside.classList.contains('open')) {
+                aside.style.setProperty('transform', 'translateX(-100%)', 'important');
+            } else {
+                aside.style.setProperty('transform', 'translateX(0)', 'important');
+            }
+        } else {
+            // Nettoyage complet des styles mobiles sur écran large
+            aside.style.removeProperty('position');
+            aside.style.removeProperty('top');
+            aside.style.removeProperty('bottom');
+            aside.style.removeProperty('left');
+            aside.style.removeProperty('z-index');
+            aside.style.removeProperty('width');
+            aside.style.removeProperty('display');
+            aside.style.removeProperty('flex-direction');
+            aside.style.removeProperty('transition');
+            aside.style.removeProperty('transform');
+            aside.classList.remove('open');
+            backdrop.style.opacity = '0';
+            backdrop.style.pointerEvents = 'none';
+            document.body.style.overflow = '';
+        }
+    };
+
+    // Appliquer au démarrage et lors du redimensionnement
+    applyMobileStyles();
+    window.addEventListener('resize', applyMobileStyles);
+
+    const openMenu = () => {
+        aside.classList.add('open');
+        aside.style.setProperty('transform', 'translateX(0)', 'important');
+        aside.style.setProperty('box-shadow', '10px 0 30px rgba(15, 28, 63, 0.25)', 'important');
+        backdrop.style.opacity = '1';
+        backdrop.style.pointerEvents = 'auto';
+        document.body.style.overflow = 'hidden';
+    };
+
+    const closeMenu = () => {
+        aside.classList.remove('open');
+        aside.style.setProperty('transform', 'translateX(-100%)', 'important');
+        aside.style.removeProperty('box-shadow');
+        backdrop.style.opacity = '0';
+        backdrop.style.pointerEvents = 'none';
+        document.body.style.overflow = '';
+    };
+
+    // Remplacer le bouton par un clone propre pour éliminer les anciens event listeners
+    const cleanBtn = mobileMenuBtn.cloneNode(true);
+    mobileMenuBtn.parentNode.replaceChild(cleanBtn, mobileMenuBtn);
+
+    cleanBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        if (aside.classList.contains('open')) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
+    });
+
+    backdrop.addEventListener('click', closeMenu);
+
+    // Fermer le menu lors du clic sur un lien interne de la barre
+    aside.querySelectorAll('nav a').forEach(link => {
+        link.addEventListener('click', closeMenu);
+    });
 
     // 4. Correction de la responsivité des tableaux (éviter les débordements horizontaux)
     document.querySelectorAll('table').forEach(table => {
