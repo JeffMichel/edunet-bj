@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration Etablissement — EduNet BJ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <script src="../../assets/js/lucide.min.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+</head>
+<body class="bg-neutralBg font-sans text-neutralText antialiased flex min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-primary-dark text-white flex flex-col justify-between hidden md:flex shrink-0">
+        <div>
+            <div class="h-16 flex items-center px-6 border-b border-white/10">
+                <span class="text-xl font-bold text-white">EduNet<span class="text-secondary">BJ</span></span>
+            </div>
+            
+            <div class="px-6 py-6 border-b border-white/10 flex items-center gap-3">
+                <div id="userAvatarContainer" class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold text-white uppercase text-sm"></div>
+                <div>
+                    <h4 id="userName" class="font-semibold text-sm truncate">Admin</h4>
+                    <span class="text-xs text-white/60">Administrateur</span>
+                </div>
+            </div>
+
+            <nav class="p-4 space-y-1">
+                <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+                </a>
+                <a href="users.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="users" class="w-4 h-4"></i> Utilisateurs
+                </a>
+                <a href="settings.html" class="flex items-center gap-3 px-4 py-3 bg-secondary text-white rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="settings" class="w-4 h-4"></i> Configuration
+                </a>
+            </nav>
+        </div>
+
+        <div class="p-4 border-t border-white/10">
+            <button onclick="Auth.logout()" class="flex items-center gap-3 w-full px-4 py-3 text-white/60 hover:text-error hover:bg-red-500/10 rounded-lg text-sm font-semibold transition-all duration-200">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Se déconnecter
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <header class="h-16 bg-white border-b border-neutralBorder flex items-center justify-between px-6 shrink-0">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-bold">Configuration de l'Établissement</h1>
+            </div>
+        </header>
+
+        <div class="p-6 max-w-4xl w-full mx-auto space-y-6">
+            
+            <!-- Information message -->
+            <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl text-primary flex gap-3 text-xs md:text-sm">
+                <i data-lucide="info" class="w-5 h-5 text-primary shrink-0 mt-0.5"></i>
+                <div>
+                    <h4 class="font-bold">Informations de structure scolaire</h4>
+                    <p class="text-blue-900 mt-1">
+                        Ces configurations définissent les matières enseignées et les classes ouvertes dans l'établissement scolaire sous l'égide du Ministère des Enseignements Secondaire, Technique et de la Formation Professionnelle du Bénin.
+                    </p>
+                </div>
+            </div>
+
+            <!-- List settings cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Classes Configuration -->
+                <div class="bg-white rounded-2xl border border-neutralBorder p-6 shadow-sm space-y-4">
+                    <h3 class="font-bold text-sm text-neutralText flex items-center gap-2 border-b border-neutralBorder pb-3">
+                        <i data-lucide="graduation-cap" class="text-primary w-5 h-5"></i> Classes Actives
+                    </h3>
+                    
+                    <div id="classesList" class="flex flex-wrap gap-2">
+                        <!-- Loaded dynamically -->
+                    </div>
+
+                    <form id="addClassForm" class="flex gap-2 pt-2 border-t border-neutralBorder">
+                        <input type="text" id="newClassInput" required placeholder="Ex: 2nde C, Tle D..." 
+                            class="flex-1 px-3 py-2 border border-neutralBorder rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary bg-white">
+                        <button type="submit" class="px-3 py-2 bg-primary hover:bg-primary-light text-white text-xs font-semibold rounded-lg transition-all shrink-0">
+                            Ajouter
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Subjects Configuration -->
+                <div class="bg-white rounded-2xl border border-neutralBorder p-6 shadow-sm space-y-4">
+                    <h3 class="font-bold text-sm text-neutralText flex items-center gap-2 border-b border-neutralBorder pb-3">
+                        <i data-lucide="book-open" class="text-secondary w-5 h-5"></i> Matières Enseignées
+                    </h3>
+                    
+                    <div id="subjectsList" class="flex flex-wrap gap-2">
+                        <!-- Loaded dynamically -->
+                    </div>
+
+                    <form id="addSubjectForm" class="flex gap-2 pt-2 border-t border-neutralBorder">
+                        <input type="text" id="newSubjectInput" required placeholder="Ex: Allemand, Informatique..." 
+                            class="flex-1 px-3 py-2 border border-neutralBorder rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary bg-white">
+                        <button type="submit" class="px-3 py-2 bg-secondary hover:bg-secondary-light text-white text-xs font-semibold rounded-lg transition-all shrink-0">
+                            Ajouter
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        const currentUser = Auth.checkSession(['admin']);
+
+        // Default local storage simulation keys for config
+        const STORAGE_CLASSES_KEY = 'edunet_config_classes';
+        const STORAGE_SUBJECTS_KEY = 'edunet_config_subjects';
+
+        // Default lists for Benin Secondary education
+        const DEFAULT_CLASSES = ['6eme', '5eme', '4eme', '3eme', '2nde', '1ere', 'Tle'];
+        const DEFAULT_SUBJECTS = ['Mathématiques', 'Français', 'PCT (Physique-Chimie)', 'SVT (Sciences de la Vie)', 'Anglais', 'Histoire-Géographie', 'EPS'];
+
+        if (currentUser) {
+            document.getElementById('userName').innerText = `${currentUser.prenom} ${currentUser.nom}`;
+
+            const initials = (currentUser.prenom[0] + currentUser.nom[0]).toUpperCase();
+            document.getElementById('userAvatarContainer').innerText = initials;
+
+            initSettingsData();
+            renderSettings();
+        }
+
+        // Initialize default lists if empty
+        function initSettingsData() {
+            if (!localStorage.getItem(STORAGE_CLASSES_KEY)) {
+                localStorage.setItem(STORAGE_CLASSES_KEY, JSON.stringify(DEFAULT_CLASSES));
+            }
+            if (!localStorage.getItem(STORAGE_SUBJECTS_KEY)) {
+                localStorage.setItem(STORAGE_SUBJECTS_KEY, JSON.stringify(DEFAULT_SUBJECTS));
+            }
+        }
+
+        // Render configuration items
+        function renderSettings() {
+            const classes = JSON.parse(localStorage.getItem(STORAGE_CLASSES_KEY));
+            const subjects = JSON.parse(localStorage.getItem(STORAGE_SUBJECTS_KEY));
+
+            // 1. Classes
+            const classesContainer = document.getElementById('classesList');
+            classesContainer.innerHTML = '';
+            classes.forEach((c, index) => {
+                classesContainer.innerHTML += `
+                    <span class="px-2.5 py-1 bg-blue-50 text-primary border border-blue-100 rounded-lg text-xs font-semibold uppercase flex items-center gap-1">
+                        ${c}
+                        <button onclick="removeItem('class', ${index})" class="text-neutralMuted hover:text-error focus:outline-none font-bold text-[10px]">&times;</button>
+                    </span>
+                `;
+            });
+
+            // 2. Subjects
+            const subjectsContainer = document.getElementById('subjectsList');
+            subjectsContainer.innerHTML = '';
+            subjects.forEach((s, index) => {
+                subjectsContainer.innerHTML += `
+                    <span class="px-2.5 py-1 bg-orange-50 text-secondary border border-orange-100 rounded-lg text-xs font-semibold flex items-center gap-1">
+                        ${s}
+                        <button onclick="removeItem('subject', ${index})" class="text-neutralMuted hover:text-error focus:outline-none font-bold text-[10px]">&times;</button>
+                    </span>
+                `;
+            });
+
+            lucide.createIcons();
+        }
+
+        // Add class handler
+        document.getElementById('addClassForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const input = document.getElementById('newClassInput');
+            const val = input.value.trim();
+            if (val) {
+                const list = JSON.parse(localStorage.getItem(STORAGE_CLASSES_KEY));
+                if (!list.map(x => x.toLowerCase()).includes(val.toLowerCase())) {
+                    list.push(val);
+                    localStorage.setItem(STORAGE_CLASSES_KEY, JSON.stringify(list));
+                    renderSettings();
+                    Utils.showToast(`Classe "${val}" ajoutée.`, "success");
+                } else {
+                    Utils.showToast("Cette classe existe déjà.", "error");
+                }
+                input.value = '';
+            }
+        });
+
+        // Add subject handler
+        document.getElementById('addSubjectForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const input = document.getElementById('newSubjectInput');
+            const val = input.value.trim();
+            if (val) {
+                const list = JSON.parse(localStorage.getItem(STORAGE_SUBJECTS_KEY));
+                if (!list.map(x => x.toLowerCase()).includes(val.toLowerCase())) {
+                    list.push(val);
+                    localStorage.setItem(STORAGE_SUBJECTS_KEY, JSON.stringify(list));
+                    renderSettings();
+                    Utils.showToast(`Matière "${val}" ajoutée.`, "success");
+                } else {
+                    Utils.showToast("Cette matière existe déjà.", "error");
+                }
+                input.value = '';
+            }
+        });
+
+        // Remove item handler
+        window.removeItem = function(type, index) {
+            const key = type === 'class' ? STORAGE_CLASSES_KEY : STORAGE_SUBJECTS_KEY;
+            const list = JSON.parse(localStorage.getItem(key));
+            const removed = list.splice(index, 1);
+            localStorage.setItem(key, JSON.stringify(list));
+            renderSettings();
+            Utils.showToast(`Élément supprimé.`, "warning");
+        }
+    </script>
+</body>
+</html>

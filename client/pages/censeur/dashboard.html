@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espace Censeur — EduNet BJ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <script src="../../assets/js/lucide.min.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+</head>
+<body class="bg-neutralBg font-sans text-neutralText antialiased flex min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-primary-dark text-white flex flex-col justify-between hidden md:flex shrink-0">
+        <div>
+            <div class="h-16 flex items-center px-6 border-b border-white/10">
+                <span class="text-xl font-bold text-white">EduNet<span class="text-secondary">BJ</span></span>
+            </div>
+            
+            <div class="px-6 py-6 border-b border-white/10 flex items-center gap-3">
+                <div id="userAvatarContainer" class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold text-white uppercase text-sm"></div>
+                <div>
+                    <h4 id="userName" class="font-semibold text-sm truncate">Chargement...</h4>
+                    <span class="text-xs text-white/60">Censeur</span>
+                </div>
+            </div>
+
+            <nav class="p-4 space-y-1">
+                <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 bg-secondary text-white rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+                </a>
+                <a href="reports.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="alert-triangle" class="w-4 h-4"></i> Discipline / Signalements
+                </a>
+            </nav>
+        </div>
+
+        <div class="p-4 border-t border-white/10">
+            <button onclick="Auth.logout()" class="flex items-center gap-3 w-full px-4 py-3 text-white/60 hover:text-error hover:bg-red-500/10 rounded-lg text-sm font-semibold transition-all duration-200">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Se déconnecter
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <header class="h-16 bg-white border-b border-neutralBorder flex items-center justify-between px-6 shrink-0">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-bold">Discipline & Surveillance</h1>
+            </div>
+            <div>
+                <span class="px-2.5 py-1 bg-red-50 text-error rounded-full text-xs font-semibold uppercase">Espace Censeur</span>
+            </div>
+        </header>
+
+        <div class="p-6 max-w-7xl w-full mx-auto space-y-6">
+            
+            <!-- Welcome Banner -->
+            <div class="bg-gradient-to-r from-primary-dark to-primary p-6 rounded-2xl text-white shadow-md relative overflow-hidden">
+                <div class="absolute right-0 bottom-0 opacity-10 transform translate-x-10 translate-y-10">
+                    <i data-lucide="shield" class="w-72 h-72"></i>
+                </div>
+                <div class="relative z-10">
+                    <h2 class="text-2xl font-bold">Bonjour, M. le Censeur</h2>
+                    <p class="text-blue-100 text-sm mt-1">Supervisez l'ordre et la discipline au sein du collège. Examinez et traitez les incidents signalés.</p>
+                </div>
+            </div>
+
+            <!-- Stats Widgets -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div class="bg-white p-5 rounded-2xl border border-neutralBorder shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-red-50 text-error flex items-center justify-center shrink-0">
+                        <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs text-neutralMuted">Signalements ouverts</span>
+                        <h4 id="statOpen" class="text-xl font-bold text-neutralText">0</h4>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-neutralBorder shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-orange-50 text-warning flex items-center justify-center shrink-0">
+                        <i data-lucide="loader" class="w-6 h-6 animate-spin"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs text-neutralMuted">En cours de traitement</span>
+                        <h4 id="statPending" class="text-xl font-bold text-neutralText">0</h4>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-neutralBorder shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-green-50 text-success flex items-center justify-center shrink-0">
+                        <i data-lucide="check-check" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs text-neutralMuted">Résolus / Fermés</span>
+                        <h4 id="statClosed" class="text-xl font-bold text-neutralText">0</h4>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent reports card -->
+            <div class="bg-white rounded-2xl border border-neutralBorder p-6 shadow-sm">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-bold text-base text-neutralText flex items-center gap-2">
+                        <i data-lucide="alert-triangle" class="text-error w-5 h-5"></i> Signalements urgents (ouverts)
+                    </h3>
+                    <a href="reports.html" class="text-xs text-primary font-bold hover:underline">Voir tous les signalements</a>
+                </div>
+                
+                <div class="space-y-4" id="recentReportsContainer">
+                    <p class="text-neutralMuted text-xs text-center py-4">Chargement des signalements récents...</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        const currentUser = Auth.checkSession(['censeur']);
+
+        if (currentUser) {
+            document.getElementById('userName').innerText = `${currentUser.prenom} ${currentUser.nom}`;
+
+            const initials = (currentUser.prenom[0] + currentUser.nom[0]).toUpperCase();
+            document.getElementById('userAvatarContainer').innerText = initials;
+
+            loadReportStats();
+        }
+
+        // Fetch reports to populate stats and recent list
+        async function loadReportStats() {
+            const container = document.getElementById('recentReportsContainer');
+            const res = await API.get('/reports');
+
+            if (res.success) {
+                const reports = res.data;
+
+                // Calculer les stats
+                const openCount = reports.filter(r => r.statut === 'ouvert').length;
+                const pendingCount = reports.filter(r => r.statut === 'traite').length;
+                const closedCount = reports.filter(r => r.statut === 'ferme').length;
+
+                document.getElementById('statOpen').innerText = openCount;
+                document.getElementById('statPending').innerText = pendingCount;
+                document.getElementById('statClosed').innerText = closedCount;
+
+                // Filtrer les signalements ouverts pour le tableau de bord
+                const openReports = reports.filter(r => r.statut === 'ouvert');
+
+                if (openReports.length === 0) {
+                    container.innerHTML = '<p class="text-neutralMuted text-xs text-center py-4">Aucun incident ouvert. Excellent travail !</p>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                openReports.slice(0, 3).forEach(r => {
+                    const reporterRole = Utils.getRoleLabel(r.signaleur_role);
+                    const targetRole = Utils.getRoleLabel(r.cible_role);
+                    
+                    container.innerHTML += `
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center p-4 border border-neutralBorder rounded-xl hover:bg-neutralBg/30 transition-all gap-4">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2 py-0.5 bg-red-50 text-error text-[10px] font-bold uppercase rounded-full">Urgent</span>
+                                    <span class="text-xs text-neutralMuted">Signalé le ${Utils.formatDate(r.created_at)}</span>
+                                </div>
+                                <h4 class="font-bold text-sm text-neutralText">
+                                    Cible : <span class="text-error font-extrabold">${Utils.escapeHTML(r.cible_prenom)} ${Utils.escapeHTML(r.cible_nom)}</span> (${targetRole} - ${r.cible_classe ? r.cible_classe.toUpperCase() : 'Personnel'})
+                                </h4>
+                                <p class="text-xs text-neutralMuted">${Utils.escapeHTML(r.motif)}</p>
+                                <span class="text-[10px] text-neutralMuted inline-block mt-1">Par : ${Utils.escapeHTML(r.signaleur_prenom)} ${Utils.escapeHTML(r.signaleur_nom)} (${reporterRole})</span>
+                            </div>
+                            <div class="self-stretch md:self-auto flex items-center justify-end">
+                                <a href="reports.html" class="px-3 py-1.5 bg-primary hover:bg-primary-light text-white text-xs font-semibold rounded-lg transition-all inline-flex items-center gap-1">
+                                    Traiter l'incident <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                });
+                lucide.createIcons();
+            } else {
+                container.innerHTML = `<p class="text-error text-xs text-center py-4">${res.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

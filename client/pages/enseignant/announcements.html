@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gérer les Annonces — EduNet BJ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <script src="../../assets/js/lucide.min.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+</head>
+<body class="bg-neutralBg font-sans text-neutralText antialiased flex min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-primary-dark text-white flex flex-col justify-between hidden md:flex shrink-0">
+        <div>
+            <div class="h-16 flex items-center px-6 border-b border-white/10">
+                <span class="text-xl font-bold text-white">EduNet<span class="text-secondary">BJ</span></span>
+            </div>
+            
+            <div class="px-6 py-6 border-b border-white/10 flex items-center gap-3">
+                <div id="userAvatarContainer" class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold text-white uppercase text-sm"></div>
+                <div>
+                    <h4 id="userName" class="font-semibold text-sm truncate">Chargement...</h4>
+                    <span id="userMatiere" class="text-xs text-white/60">Enseignant</span>
+                </div>
+            </div>
+
+            <nav class="p-4 space-y-1">
+                <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+                </a>
+                <a href="courses.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="book-open" class="w-4 h-4"></i> Cours
+                </a>
+                <a href="assignments.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="clipboard-list" class="w-4 h-4"></i> Devoirs
+                </a>
+                <a href="grades.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="award" class="w-4 h-4"></i> Saisie des Notes
+                </a>
+                <a href="announcements.html" class="flex items-center gap-3 px-4 py-3 bg-secondary text-white rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="megaphone" class="w-4 h-4"></i> Annonces
+                </a>
+                <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="message-square" class="w-4 h-4"></i> Messagerie
+                </a>
+            </nav>
+        </div>
+
+        <div class="p-4 border-t border-white/10">
+            <button onclick="Auth.logout()" class="flex items-center gap-3 w-full px-4 py-3 text-white/60 hover:text-error hover:bg-red-500/10 rounded-lg text-sm font-semibold transition-all duration-200">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Se déconnecter
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <header class="h-16 bg-white border-b border-neutralBorder flex items-center justify-between px-6 shrink-0">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-bold">Gestion des Annonces</h1>
+            </div>
+            <button onclick="openAnnounceModal()" class="px-4 py-2 bg-primary hover:bg-primary-light text-white font-semibold rounded-lg text-xs flex items-center gap-1.5 shadow transition-all">
+                <i data-lucide="megaphone" class="w-4 h-4"></i> Publier un communiqué
+            </button>
+        </header>
+
+        <div class="p-6 max-w-7xl w-full mx-auto space-y-6">
+            
+            <!-- List of announcements -->
+            <div class="bg-white rounded-2xl border border-neutralBorder p-6 shadow-sm">
+                <h3 class="font-bold text-base text-neutralText mb-6 flex items-center gap-2">
+                    <i data-lucide="clipboard" class="text-primary w-5 h-5"></i> Historique de mes communiqués
+                </h3>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="border-b border-neutralBorder text-neutralMuted uppercase text-xs font-semibold">
+                                <th class="py-3 px-4">Titre</th>
+                                <th class="py-3 px-4">Classe cible</th>
+                                <th class="py-3 px-4">Date de publication</th>
+                                <th class="py-3 px-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="announcementsTableBody">
+                            <tr>
+                                <td colspan="4" class="text-center py-8 text-neutralMuted">Chargement de l'historique des annonces...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Publish / Edit Announcement Modal -->
+    <div id="announceModal" class="fixed inset-0 bg-neutralText/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white w-full max-w-md p-6 rounded-2xl border border-neutralBorder shadow-xl relative animate-scale-up">
+            <button onclick="closeAnnounceModal()" class="absolute top-4 right-4 text-neutralMuted hover:text-neutralText">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <h3 id="modalTitle" class="text-lg font-bold text-primary mb-6 flex items-center gap-2">
+                <i data-lucide="megaphone"></i> Publier un communiqué
+            </h3>
+
+            <form id="announceForm" class="space-y-4">
+                <input type="hidden" id="announceId">
+                <div>
+                    <label for="announceTitle" class="block text-xs font-semibold uppercase tracking-wider text-neutralMuted mb-2">Titre du communiqué</label>
+                    <input id="announceTitle" name="titre" type="text" required 
+                        class="appearance-none rounded-xl relative block w-full px-3 py-3 border border-neutralBorder placeholder-neutralMuted text-neutralText focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm" 
+                        placeholder="Ex: Report du devoir de Mathématiques">
+                </div>
+
+                <div>
+                    <label for="announceContent" class="block text-xs font-semibold uppercase tracking-wider text-neutralMuted mb-2">Contenu</label>
+                    <textarea id="announceContent" name="contenu" rows="5" required
+                        class="appearance-none rounded-xl relative block w-full px-3 py-3 border border-neutralBorder placeholder-neutralMuted text-neutralText focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm" 
+                        placeholder="Écrivez le message destiné aux élèves..."></textarea>
+                </div>
+
+                <div>
+                    <label for="announceClasse" class="block text-xs font-semibold uppercase tracking-wider text-neutralMuted mb-2">Classe cible (Laisser vide pour une annonce générale)</label>
+                    <select id="announceClasse" name="classe_cible" 
+                        class="appearance-none rounded-xl relative block w-full px-3 py-3 border border-neutralBorder text-neutralText bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm">
+                        <option value="">Tous (Général)</option>
+                        <option value="6eme">6ème</option>
+                        <option value="5eme">5ème</option>
+                        <option value="4eme">4ème</option>
+                        <option value="3eme">3ème</option>
+                        <option value="2nde">Seconde</option>
+                        <option value="1ere">Première</option>
+                        <option value="Tle">Terminale</option>
+                    </select>
+                </div>
+
+                <div class="pt-4 flex gap-3">
+                    <button type="button" onclick="closeAnnounceModal()" class="flex-1 py-3 px-4 bg-neutralBg hover:bg-neutralBorder text-neutralText font-semibold rounded-xl text-sm transition-all">
+                        Annuler
+                    </button>
+                    <button type="submit" id="submitBtn" class="flex-1 py-3 px-4 bg-primary hover:bg-primary-light text-white font-semibold rounded-xl text-sm transition-all">
+                        Publier
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const currentUser = Auth.checkSession(['enseignant']);
+        let editMode = false;
+
+        if (currentUser) {
+            document.getElementById('userName').innerText = `${currentUser.prenom} ${currentUser.nom}`;
+            document.getElementById('userMatiere').innerText = `Enseignant de ${currentUser.matiere}`;
+
+            const initials = (currentUser.prenom[0] + currentUser.nom[0]).toUpperCase();
+            document.getElementById('userAvatarContainer').innerText = initials;
+
+            loadAnnouncements();
+        }
+
+        // Fetch announcements
+        async function loadAnnouncements() {
+            const tbody = document.getElementById('announcementsTableBody');
+            const res = await API.get('/announcements');
+            
+            if (res.success) {
+                // Filtrer par auteur connecté
+                const myAnn = res.data.filter(a => a.auteur_id === currentUser.id);
+
+                if (myAnn.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="text-center py-8 text-neutralMuted">Vous n'avez publié aucun communiqué pour le moment.</td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                myAnn.forEach(ann => {
+                    const classLabel = ann.classe_cible ? ann.classe_cible.toUpperCase() : 'Général (Tous)';
+                    
+                    tbody.innerHTML += `
+                        <tr class="border-b border-neutralBorder hover:bg-neutralBg/20 transition-all">
+                            <td class="py-4 px-4 font-bold text-neutralText">
+                                ${Utils.escapeHTML(ann.titre)}
+                                <div class="text-xs text-neutralMuted font-normal mt-1 line-clamp-1">${Utils.escapeHTML(ann.contenu)}</div>
+                            </td>
+                            <td class="py-4 px-4">
+                                <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${ann.classe_cible ? 'bg-orange-50 text-secondary' : 'bg-blue-50 text-primary'}">
+                                    ${classLabel}
+                                </span>
+                            </td>
+                            <td class="py-4 px-4 text-neutralMuted text-xs">${Utils.formatDate(ann.created_at)}</td>
+                            <td class="py-4 px-4 text-right">
+                                <div class="flex gap-2 justify-end">
+                                    <button onclick="openEditModal(${ann.id}, '${escapeQuote(ann.titre)}', '${escapeQuote(ann.contenu)}', '${ann.classe_cible || ''}')" class="p-1.5 hover:bg-blue-50 text-primary rounded-lg transition-all" title="Modifier">
+                                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                    </button>
+                                    <button onclick="deleteAnnounce(${ann.id})" class="p-1.5 hover:bg-red-50 text-error rounded-lg transition-all" title="Supprimer">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+                lucide.createIcons();
+            } else {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center py-8 text-error font-medium">${res.message}</td>
+                    </tr>
+                `;
+            }
+        }
+
+        function escapeQuote(str) {
+            return str.replace(/'/g, "\\'");
+        }
+
+        // Delete Announcement
+        async function deleteAnnounce(id) {
+            if (!confirm("Voulez-vous vraiment supprimer cette annonce ?")) {
+                return;
+            }
+
+            const res = await API.delete(`/announcements/${id}`);
+            if (res.success) {
+                Utils.showToast("Annonce supprimée avec succès.", "success");
+                loadAnnouncements();
+            } else {
+                Utils.showToast(res.message, "error");
+            }
+        }
+
+        // Open Modal to create
+        function openAnnounceModal() {
+            editMode = false;
+            document.getElementById('modalTitle').innerText = "Publier un communiqué";
+            document.getElementById('announceId').value = '';
+            document.getElementById('announceForm').reset();
+            document.getElementById('submitBtn').innerText = "Publier";
+            document.getElementById('announceModal').classList.remove('hidden');
+        }
+
+        // Open Modal to edit
+        function openEditModal(id, titre, contenu, classeCible) {
+            editMode = true;
+            document.getElementById('modalTitle').innerText = "Modifier le communiqué";
+            document.getElementById('announceId').value = id;
+            document.getElementById('announceTitle').value = titre;
+            document.getElementById('announceContent').value = contenu;
+            document.getElementById('announceClasse').value = classeCible;
+            document.getElementById('submitBtn').innerText = "Enregistrer";
+            document.getElementById('announceModal').classList.remove('hidden');
+        }
+
+        function closeAnnounceModal() {
+            document.getElementById('announceModal').classList.add('hidden');
+        }
+
+        // Form Submit
+        document.getElementById('announceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const id = document.getElementById('announceId').value;
+            const titre = document.getElementById('announceTitle').value.trim();
+            const contenu = document.getElementById('announceContent').value.trim();
+            const classe_cible = document.getElementById('announceClasse').value;
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (!titre || !contenu) {
+                Utils.showToast("Le titre et le contenu sont requis.", "error");
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Traitement...";
+
+            let res;
+            if (editMode) {
+                res = await API.put(`/announcements/${id}`, { titre, contenu, classe_cible });
+            } else {
+                res = await API.postData('/announcements', { titre, contenu, classe_cible });
+            }
+
+            if (res.success) {
+                Utils.showToast(editMode ? "Communiqué mis à jour !" : "Communiqué publié avec succès !", "success");
+                closeAnnounceModal();
+                loadAnnouncements();
+            } else {
+                Utils.showToast(res.message, "error");
+            }
+            submitBtn.disabled = false;
+            submitBtn.innerText = editMode ? "Enregistrer" : "Publier";
+        });
+    </script>
+</body>
+</html>

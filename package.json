@@ -1,0 +1,13 @@
+{
+  "name": "edunet-bj",
+  "version": "1.0.0",
+  "description": "Plateforme scolaire numérique EduNet BJ",
+  "main": "api/index.php",
+  "scripts": {
+    "build:css": "tailwindcss -i client/assets/css/src-style.css -o client/assets/css/style.css --minify",
+    "watch:css": "tailwindcss -i client/assets/css/src-style.css -o client/assets/css/style.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.1"
+  }
+}

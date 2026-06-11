@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gérer les Utilisateurs — EduNet BJ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <script src="../../assets/js/lucide.min.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+</head>
+<body class="bg-neutralBg font-sans text-neutralText antialiased flex min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-primary-dark text-white flex flex-col justify-between hidden md:flex shrink-0">
+        <div>
+            <div class="h-16 flex items-center px-6 border-b border-white/10">
+                <span class="text-xl font-bold text-white">EduNet<span class="text-secondary">BJ</span></span>
+            </div>
+            
+            <div class="px-6 py-6 border-b border-white/10 flex items-center gap-3">
+                <div id="userAvatarContainer" class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold text-white uppercase text-sm"></div>
+                <div>
+                    <h4 id="userName" class="font-semibold text-sm truncate">Admin</h4>
+                    <span class="text-xs text-white/60">Administrateur</span>
+                </div>
+            </div>
+
+            <nav class="p-4 space-y-1">
+                <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+                </a>
+                <a href="users.html" class="flex items-center gap-3 px-4 py-3 bg-secondary text-white rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="users" class="w-4 h-4"></i> Utilisateurs
+                </a>
+                <a href="settings.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="settings" class="w-4 h-4"></i> Configuration
+                </a>
+            </nav>
+        </div>
+
+        <div class="p-4 border-t border-white/10">
+            <button onclick="Auth.logout()" class="flex items-center gap-3 w-full px-4 py-3 text-white/60 hover:text-error hover:bg-red-500/10 rounded-lg text-sm font-semibold transition-all duration-200">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Se déconnecter
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <header class="h-16 bg-white border-b border-neutralBorder flex items-center justify-between px-6 shrink-0">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-bold">Comptes Utilisateurs</h1>
+            </div>
+            <button onclick="openCreateModal()" class="px-4 py-2 bg-primary hover:bg-primary-light text-white font-semibold rounded-lg text-xs flex items-center gap-1.5 shadow transition-all">
+                <i data-lucide="user-plus" class="w-4 h-4"></i> Créer un enseignant
+            </button>
+        </header>
+
+        <div class="p-6 max-w-7xl w-full mx-auto space-y-6">
+            
+            <!-- Filters Bar -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-white p-4 rounded-xl border border-neutralBorder">
+                <div>
+                    <h3 class="font-bold text-sm">Filtres de comptes</h3>
+                    <p class="text-xs text-neutralMuted">Recherchez ou filtrez par rôle et statut</p>
+                </div>
+                <div class="flex w-full sm:w-auto flex-wrap gap-3">
+                    <input type="text" id="searchInput" oninput="filterUsers()" placeholder="Rechercher par nom..." 
+                        class="px-3 py-2 border border-neutralBorder rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary w-full sm:w-48">
+                    
+                    <select id="roleFilter" onchange="filterUsers()" 
+                        class="px-3 py-2 border border-neutralBorder rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary">
+                        <option value="">Tous les rôles</option>
+                        <option value="eleve">Élève</option>
+                        <option value="enseignant">Enseignant</option>
+                        <option value="censeur">Censeur</option>
+                        <option value="admin">Administrateur</option>
+                    </select>
+
+                    <select id="statusFilter" onchange="filterUsers()" 
+                        class="px-3 py-2 border border-neutralBorder rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary">
+                        <option value="">Tous les statuts</option>
+                        <option value="en_attente">En attente</option>
+                        <option value="actif">Actif</option>
+                        <option value="suspendu">Suspendu</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Users table -->
+            <div class="bg-white rounded-2xl border border-neutralBorder p-6 shadow-sm">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="border-b border-neutralBorder text-neutralMuted uppercase text-xs font-semibold">
+                                <th class="py-3 px-4">Utilisateur</th>
+                                <th class="py-3 px-4">Rôle</th>
+                                <th class="py-3 px-4">Affectation / Classe</th>
+                                <th class="py-3 px-4">Statut</th>
+                                <th class="py-3 px-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <tr>
+                                <td colspan="5" class="text-center py-8 text-neutralMuted">Chargement de la liste des comptes...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Create Teacher Modal -->
+    <div id="createModal" class="fixed inset-0 bg-neutralText/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white w-full max-w-md p-6 rounded-2xl border border-neutralBorder shadow-xl relative animate-scale-up">
+            <button onclick="closeCreateModal()" class="absolute top-4 right-4 text-neutralMuted hover:text-neutralText">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <h3 class="text-lg font-bold text-primary mb-6 flex items-center gap-2">
+                <i data-lucide="user-plus"></i> Créer un compte enseignant
+            </h3>
+
+            <form id="createForm" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="teacherNom" class="block text-xs font-semibold uppercase tracking-wider text-neutralMuted mb-2">Nom</label>
+                        <input id="teacherNom" name="nom" type="text" required 
+                            class="appearance-none rounded-xl relative block w-full px-3 py-3 border border-neutralBorder placeholder-neutralMuted text-neutralText focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm" 
+                            placeholder="Ex: SOGLO">
+                    </div>
+                    <div>
+                        <label for="teacherPrenom" class="block text-xs font-semibold uppercase tracking-wider text-neutralMuted mb-2">Prénom</label>
+                        <input id="teacherPrenom" name="prenom" type="text" required 
+                            class="appearance-none rounded-xl relative block w-full px-3 py-3 border border-neutralBorder placeholder-neutralMuted text-neutralText focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm" 
+                            placeholder="Ex: Marc">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="teacherEmail" class="block text-xs font-semibold uppercase tracking-wider text-neutralMuted mb-2">Adresse Email</label>
+                    <input id="teacherEmail" name="email" type="email" required 
+                        class="appearance-none rounded-xl relative block w-full px-3 py-3 border border-neutralBorder placeholder-neutralMuted text-neutralText focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm" 
+                        placeholder="marc.soglo@edunetbj.bj">
+                </div>
+
+                <div>
+                    <label for="teacherPassword" class="block text-xs font-semibold uppercase tracking-wider text-neutralMuted mb-2">Mot de passe temporaire</label>
+                    <input id="teacherPassword" name="password" type="text" required 
+                        class="appearance-none rounded-xl relative block w-full px-3 py-3 border border-neutralBorder placeholder-neutralMuted text-neutralText focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm" 
+                        placeholder="Ex: Prof@2026">
+                </div>
+
+                <div>
+                    <label for="teacherMatiere" class="block text-xs font-semibold uppercase tracking-wider text-neutralMuted mb-2">Matière enseignée</label>
+                    <input id="teacherMatiere" name="matiere" type="text" required 
+                        class="appearance-none rounded-xl relative block w-full px-3 py-3 border border-neutralBorder placeholder-neutralMuted text-neutralText focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm" 
+                        placeholder="Ex: Mathématiques, Français...">
+                </div>
+
+                <div class="pt-4 flex gap-3">
+                    <button type="button" onclick="closeCreateModal()" class="flex-1 py-3 px-4 bg-neutralBg hover:bg-neutralBorder text-neutralText font-semibold rounded-xl text-sm transition-all">
+                        Annuler
+                    </button>
+                    <button type="submit" id="createBtn" class="flex-1 py-3 px-4 bg-primary hover:bg-primary-light text-white font-semibold rounded-xl text-sm transition-all">
+                        Créer le compte
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const currentUser = Auth.checkSession(['admin']);
+        let allUsers = [];
+
+        if (currentUser) {
+            document.getElementById('userName').innerText = `${currentUser.prenom} ${currentUser.nom}`;
+
+            const initials = (currentUser.prenom[0] + currentUser.nom[0]).toUpperCase();
+            document.getElementById('userAvatarContainer').innerText = initials;
+
+            // Détecter un filtre passé dans l'URL (?filter=pending)
+            const urlParams = new URLSearchParams(window.location.search);
+            const initialFilter = urlParams.get('filter');
+            if (initialFilter === 'pending') {
+                document.getElementById('statusFilter').value = 'en_attente';
+            }
+
+            loadUsers();
+        }
+
+        // Get users list
+        async function loadUsers() {
+            const tbody = document.getElementById('usersTableBody');
+            const res = await API.get('/admin/users');
+            
+            if (res.success) {
+                allUsers = res.data;
+                renderUsers(allUsers);
+            } else {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-8 text-error font-medium">${res.message}</td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Render users in table
+        function renderUsers(users) {
+            const tbody = document.getElementById('usersTableBody');
+            
+            if (users.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-8 text-neutralMuted">Aucun compte trouvé correspondant aux critères.</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            users.forEach(u => {
+                const isMe = u.id === currentUser.id;
+                const roleLabel = Utils.getRoleLabel(u.role);
+                const classOrMatiere = u.role === 'eleve' ? (u.classe ? u.classe.toUpperCase() : 'Non assignée') : (u.matiere || 'Administration');
+                
+                // Colors according to status
+                let statusBadge = '';
+                if (u.statut === 'en_attente') {
+                    statusBadge = '<span class="px-2 py-0.5 bg-yellow-50 text-warning text-xs font-semibold rounded-full border border-yellow-200">En attente</span>';
+                } else if (u.statut === 'actif') {
+                    statusBadge = '<span class="px-2 py-0.5 bg-green-50 text-success text-xs font-semibold rounded-full border border-green-200">Actif</span>';
+                } else {
+                    statusBadge = '<span class="px-2 py-0.5 bg-red-50 text-error text-xs font-semibold rounded-full border border-red-200">Suspendu</span>';
+                }
+
+                // Render actions
+                let actionsHTML = '';
+                if (!isMe) {
+                    if (u.statut === 'en_attente') {
+                        actionsHTML += `
+                            <button onclick="changeStatus(${u.id}, 'actif')" class="px-2 py-1 bg-green-50 hover:bg-green-100 text-success text-xs font-semibold rounded-lg border border-green-200 transition-all">
+                                Activer
+                            </button>
+                        `;
+                    } else if (u.statut === 'actif') {
+                        actionsHTML += `
+                            <button onclick="changeStatus(${u.id}, 'suspendu')" class="px-2 py-1 bg-red-50 hover:bg-red-100 text-error text-xs font-semibold rounded-lg border border-red-200 transition-all">
+                                Suspendre
+                            </button>
+                        `;
+                    } else {
+                        actionsHTML += `
+                            <button onclick="changeStatus(${u.id}, 'actif')" class="px-2 py-1 bg-green-50 hover:bg-green-100 text-success text-xs font-semibold rounded-lg border border-green-200 transition-all">
+                                Réactiver
+                            </button>
+                        `;
+                    }
+                    // Delete account button
+                    actionsHTML += `
+                        <button onclick="deleteAccount(${u.id})" class="p-1 hover:bg-red-50 text-error rounded-lg transition-all ml-1.5" title="Supprimer définitivement">
+                            <i data-lucide="trash-2" class="w-4 h-4 inline"></i>
+                        </button>
+                    `;
+                } else {
+                    actionsHTML = '<span class="text-xs text-neutralMuted italic">Votre compte</span>';
+                }
+
+                tbody.innerHTML += `
+                    <tr class="border-b border-neutralBorder hover:bg-neutralBg/20 transition-all text-xs md:text-sm">
+                        <td class="py-3 px-4 font-bold text-neutralText">
+                            ${Utils.escapeHTML(u.prenom)} ${Utils.escapeHTML(u.nom)}
+                            <div class="text-[10px] text-neutralMuted font-normal mt-0.5">${Utils.escapeHTML(u.email)}</div>
+                        </td>
+                        <td class="py-3 px-4 capitalize font-semibold text-neutralText">${roleLabel}</td>
+                        <td class="py-3 px-4 text-neutralMuted">${classOrMatiere}</td>
+                        <td class="py-3 px-4">${statusBadge}</td>
+                        <td class="py-3 px-4 text-right">${actionsHTML}</td>
+                    </tr>
+                `;
+            });
+            lucide.createIcons();
+        }
+
+        // Apply filters
+        function filterUsers() {
+            const search = document.getElementById('searchInput').value.toLowerCase().trim();
+            const role = document.getElementById('roleFilter').value;
+            const status = document.getElementById('statusFilter').value;
+
+            const filtered = allUsers.filter(u => {
+                const matchSearch = u.nom.toLowerCase().includes(search) || u.prenom.toLowerCase().includes(search) || u.email.toLowerCase().includes(search);
+                const matchRole = role === '' || u.role === role;
+                const matchStatus = status === '' || u.statut === status;
+                return matchSearch && matchRole && matchStatus;
+            });
+
+            renderUsers(filtered);
+        }
+
+        // Change Status (Activate/Suspend)
+        async function changeStatus(id, newStatus) {
+            const res = await API.put(`/admin/users/${id}/status`, { statut: newStatus });
+            if (res.success) {
+                Utils.showToast("Statut du compte mis à jour.", "success");
+                loadUsers();
+            } else {
+                Utils.showToast(res.message, "error");
+            }
+        }
+
+        // Delete Account
+        async function deleteAccount(id) {
+            if (!confirm("Voulez-vous vraiment supprimer cet utilisateur ? Cette action est irréversible et supprimera toutes ses données associées (notes, cours, messages, etc.).")) {
+                return;
+            }
+
+            const res = await API.delete(`/admin/users/${id}`);
+            if (res.success) {
+                Utils.showToast("Compte supprimé avec succès.", "success");
+                loadUsers();
+            } else {
+                Utils.showToast(res.message, "error");
+            }
+        }
+
+        // Form Submit
+        document.getElementById('createForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const nom = document.getElementById('teacherNom').value.trim();
+            const prenom = document.getElementById('teacherPrenom').value.trim();
+            const email = document.getElementById('teacherEmail').value.trim();
+            const password = document.getElementById('teacherPassword').value.trim();
+            const matiere = document.getElementById('teacherMatiere').value.trim();
+            const submitBtn = document.getElementById('createBtn');
+
+            if (!nom || !prenom || !email || !password || !matiere) {
+                Utils.showToast("Veuillez remplir tous les champs.", "error");
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Création...";
+
+            const res = await API.postData('/admin/users', { nom, prenom, email, password, matiere });
+
+            if (res.success) {
+                Utils.showToast("Compte enseignant créé avec succès !", "success");
+                closeCreateModal();
+                document.getElementById('createForm').reset();
+                loadUsers();
+            } else {
+                Utils.showToast(res.message, "error");
+            }
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Créer le compte";
+        });
+
+        // Modals management
+        function openCreateModal() {
+            document.getElementById('createForm').reset();
+            document.getElementById('createModal').classList.remove('hidden');
+        }
+        function closeCreateModal() {
+            document.getElementById('createModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

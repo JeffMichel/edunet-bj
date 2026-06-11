@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saisie des Notes — EduNet BJ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <script src="../../assets/js/lucide.min.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+</head>
+<body class="bg-neutralBg font-sans text-neutralText antialiased flex min-h-screen">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-primary-dark text-white flex flex-col justify-between hidden md:flex shrink-0">
+        <div>
+            <!-- Logo -->
+            <div class="h-16 flex items-center px-6 border-b border-white/10">
+                <span class="text-xl font-bold text-white">EduNet<span class="text-secondary">BJ</span></span>
+            </div>
+            
+            <!-- User Summary -->
+            <div class="px-6 py-6 border-b border-white/10 flex items-center gap-3">
+                <div id="userAvatarContainer" class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold text-white uppercase text-sm"></div>
+                <div>
+                    <h4 id="userName" class="font-semibold text-sm truncate">Chargement...</h4>
+                    <span id="userMatiere" class="text-xs text-white/60">Enseignant</span>
+                </div>
+            </div>
+
+            <!-- Nav Items -->
+            <nav class="p-4 space-y-1">
+                <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+                </a>
+                <a href="courses.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="book-open" class="w-4 h-4"></i> Cours
+                </a>
+                <a href="assignments.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="clipboard-list" class="w-4 h-4"></i> Devoirs
+                </a>
+                <a href="grades.html" class="flex items-center gap-3 px-4 py-3 bg-secondary text-white rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="award" class="w-4 h-4"></i> Saisie des Notes
+                </a>
+                <a href="announcements.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="megaphone" class="w-4 h-4"></i> Annonces
+                </a>
+                <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="message-square" class="w-4 h-4"></i> Messagerie
+                </a>
+            </nav>
+        </div>
+
+        <!-- Logout -->
+        <div class="p-4 border-t border-white/10">
+            <button onclick="Auth.logout()" class="flex items-center gap-3 w-full px-4 py-3 text-white/60 hover:text-error hover:bg-red-500/10 rounded-lg text-sm font-semibold transition-all duration-200">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Se déconnecter
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <header class="h-16 bg-white border-b border-neutralBorder flex items-center justify-between px-6 shrink-0">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-bold">Saisie & Gestion des Notes</h1>
+            </div>
+            <button id="addNoteBtn" class="btn-primary flex items-center gap-2 text-xs">
+                <i data-lucide="plus" class="w-4 h-4"></i> Saisir une note
+            </button>
+        </header>
+
+        <div class="p-6 max-w-6xl w-full mx-auto space-y-6">
+            <!-- Header section -->
+            <div>
+                <p class="text-neutralMuted text-sm">Saisie et gestion des notes des élèves de vos classes</p>
+            </div>
+
+            <!-- Modal de saisie -->
+            <div id="noteModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-2xl shadow-xl w-full max-w-md">
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-neutralBorder">
+                        <h2 class="font-semibold text-neutralText">Saisir une nouvelle note</h2>
+                        <button id="closeModal" class="text-neutralMuted hover:text-neutralText transition-colors">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <form id="noteForm" class="px-6 py-5 space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-neutralText mb-1">Élève</label>
+                            <select id="eleveId" required class="w-full border border-neutralBorder rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary">
+                                <option value="">Choisir un élève...</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-neutralText mb-1">Matière</label>
+                                <input type="text" id="matiere" required placeholder="Ex: Mathématiques" readonly
+                                    class="w-full border border-neutralBorder rounded-xl px-3 py-2.5 text-sm bg-neutralBg text-neutralMuted focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-neutralText mb-1">Note /20</label>
+                                <input type="number" id="note" required min="0" max="20" step="0.25" placeholder="Ex: 14.5"
+                                    class="w-full border border-neutralBorder rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-neutralText mb-1">Trimestre</label>
+                                <select id="trimestre" required class="w-full border border-neutralBorder rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary">
+                                    <option value="1">1er trimestre</option>
+                                    <option value="2">2ème trimestre</option>
+                                    <option value="3">3ème trimestre</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-neutralText mb-1">Année scolaire</label>
+                                <input type="text" id="anneeScolaire" value="2025-2026" required
+                                    class="w-full border border-neutralBorder rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-neutralText mb-1">Appréciation <span class="text-neutralMuted">(optionnel)</span></label>
+                            <input type="text" id="appreciation" placeholder="Ex: Bon travail, continue ainsi !"
+                                class="w-full border border-neutralBorder rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                        </div>
+                        <button type="submit" class="btn-primary w-full flex items-center justify-center gap-2 py-3">
+                            <i data-lucide="save" class="w-4 h-4"></i> Enregistrer la note
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Grades table -->
+            <div class="bg-white rounded-2xl border border-neutralBorder shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-neutralBorder">
+                    <h2 class="font-bold text-sm text-neutralText">Notes saisies</h2>
+                </div>
+                <div id="gradesContainer">
+                    <div class="text-center py-16 text-neutralMuted">
+                        <i data-lucide="loader" class="w-10 h-10 mx-auto mb-3 opacity-40 animate-spin"></i>
+                        <p>Chargement...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Session Check
+        const user = Auth.checkSession(['enseignant']);
+
+        if (user) {
+            document.getElementById('userName').textContent = `${user.prenom} ${user.nom}`;
+            document.getElementById('userMatiere').innerText = `Enseignant de ${user.matiere}`;
+            document.getElementById('matiere').value = user.matiere;
+
+            const initials = (user.prenom[0] + user.nom[0]).toUpperCase();
+            document.getElementById('userAvatarContainer').innerText = initials;
+
+            loadStudents();
+            loadGrades();
+        }
+
+        // Modal controls
+        document.getElementById('addNoteBtn').onclick = () => {
+            document.getElementById('noteModal').classList.remove('hidden');
+        };
+        document.getElementById('closeModal').onclick = () => {
+            document.getElementById('noteModal').classList.add('hidden');
+        };
+        document.getElementById('noteModal').onclick = (e) => {
+            if (e.target === document.getElementById('noteModal')) {
+                document.getElementById('noteModal').classList.add('hidden');
+            }
+        };
+
+        // Load students
+        async function loadStudents() {
+            const res = await API.get('/users?role=eleve');
+            if (res.success && res.data) {
+                const select = document.getElementById('eleveId');
+                res.data.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.textContent = `${s.prenom} ${s.nom} (${s.classe || 'Sans classe'})`;
+                    select.appendChild(opt);
+                });
+            }
+        }
+
+        // Load grades
+        async function loadGrades() {
+            const res = await API.get('/notes');
+            const container = document.getElementById('gradesContainer');
+            
+            if (!res.success || !res.data || res.data.length === 0) {
+                container.innerHTML = `<div class="text-center py-16 text-neutralMuted">
+                    <i data-lucide="clipboard-list" class="w-12 h-12 mx-auto mb-3 opacity-30"></i>
+                    <p>Aucune note saisie pour l'instant.</p>
+                </div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            container.innerHTML = `<div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-neutralBg">
+                        <tr class="text-neutralMuted uppercase text-xs font-semibold">
+                            <th class="py-3 px-6">Élève</th>
+                            <th class="py-3 px-6">Matière</th>
+                            <th class="py-3 px-6 text-center">Note</th>
+                            <th class="py-3 px-6">Trimestre</th>
+                            <th class="py-3 px-6">Appréciation</th>
+                            <th class="py-3 px-6">Année</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-neutralBorder">
+                        ${res.data.map(g => {
+                            const note = parseFloat(g.note);
+                            const noteColor = note >= 14 ? 'text-green-600 bg-green-50 border-green-200' 
+                                : note >= 10 ? 'text-blue-600 bg-blue-50 border-blue-200' 
+                                : 'text-red-600 bg-red-50 border-red-200';
+                            return `<tr class="hover:bg-neutralBg/50 transition-colors text-sm">
+                                <td class="px-6 py-4 font-medium">${g.eleve_prenom || ''} ${g.eleve_nom || ''}</td>
+                                <td class="px-6 py-4">${Utils.escapeHtml(g.matiere)}</td>
+                                <td class="px-6 py-4 text-center">
+                                    <span class="inline-block px-3 py-1 rounded-full text-sm font-bold border ${noteColor}">${g.note}/20</span>
+                                </td>
+                                <td class="px-6 py-4 text-neutralMuted">T${g.trimestre}</td>
+                                <td class="px-6 py-4 text-neutralMuted">${Utils.escapeHtml(g.appreciation || '—')}</td>
+                                <td class="px-6 py-4 text-neutralMuted">${g.annee_scolaire}</td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>`;
+            lucide.createIcons();
+        }
+
+        // Submit form
+        document.getElementById('noteForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const body = {
+                eleve_id: parseInt(document.getElementById('eleveId').value),
+                matiere: document.getElementById('matiere').value.trim(),
+                note: parseFloat(document.getElementById('note').value),
+                trimestre: document.getElementById('trimestre').value,
+                annee_scolaire: document.getElementById('anneeScolaire').value.trim(),
+                appreciation: document.getElementById('appreciation').value.trim()
+            };
+
+            const res = await API.postData('/notes', body);
+            if (res.success) {
+                Utils.showToast('Note enregistrée avec succès !', 'success');
+                document.getElementById('noteModal').classList.add('hidden');
+                document.getElementById('noteForm').reset();
+                document.getElementById('anneeScolaire').value = '2025-2026';
+                await loadGrades();
+            } else {
+                Utils.showToast(res.message || 'Erreur lors de la saisie', 'error');
+            }
+        });
+
+        lucide.createIcons();
+    </script>
+</body>
+</html>

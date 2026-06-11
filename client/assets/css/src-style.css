@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Variables CSS de la charte graphique */
+:root {
+  --color-primary:        #1C3F94;
+  --color-primary-light:  #2952C4;
+  --color-primary-dark:   #112569;
+  
+  --color-secondary:      #E8621A;
+  --color-secondary-light:#F07840;
+  --color-secondary-dark: #C04E10;
+  
+  --color-bg:             #F8F9FC;
+  --color-surface:        #FFFFFF;
+  --color-border:         #E4E8F0;
+  --color-text:           #0F1C3F;
+  --color-text-muted:     #64748B;
+  
+  --color-success:        #10B981;
+  --color-warning:        #F59E0B;
+  --color-error:          #EF4444;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+/* Animations et transitions globales */
+.transition-all-custom {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Classes de cartes stylisées */
+.card-custom {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 6px -1px rgba(28, 63, 148, 0.05), 0 2px 4px -1px rgba(28, 63, 148, 0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-custom:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(28, 63, 148, 0.08), 0 4px 6px -2px rgba(28, 63, 148, 0.05);
+}
+
+@layer components {
+  /* Bouton Primaire */
+  .btn-primary {
+    @apply bg-primary hover:bg-primary-light text-white font-semibold rounded-xl text-sm px-5 py-3 transition-all duration-200 shadow-lg shadow-primary/20 hover:shadow-primary/30 flex items-center justify-center gap-2;
+  }
+
+  /* Bouton Secondaire */
+  .btn-secondary {
+    @apply bg-secondary hover:bg-secondary-light text-white font-semibold rounded-xl text-sm px-5 py-3 transition-all duration-200 shadow-lg shadow-secondary/20 hover:shadow-secondary/30 flex items-center justify-center gap-2;
+  }
+
+  /* Bouton Ghost */
+  .btn-ghost {
+    @apply border border-primary text-primary hover:bg-primary hover:text-white font-semibold rounded-xl text-sm px-5 py-3 transition-all duration-200 flex items-center justify-center gap-2;
+  }
+
+  /* Navigation Link */
+  .nav-link {
+    @apply px-4 py-2 text-sm font-medium text-neutralMuted hover:text-primary hover:bg-primary/5 rounded-lg transition-all duration-200;
+  }
+
+  .nav-link.active {
+    @apply text-primary bg-primary/10 font-bold;
+  }
+}
+

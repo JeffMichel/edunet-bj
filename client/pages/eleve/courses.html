@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Cours — EduNet BJ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <script src="../../assets/js/lucide.min.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+</head>
+<body class="bg-neutralBg font-sans text-neutralText antialiased flex min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-primary-dark text-white flex flex-col justify-between hidden md:flex shrink-0">
+        <div>
+            <div class="h-16 flex items-center px-6 border-b border-white/10">
+                <span class="text-xl font-bold text-white">EduNet<span class="text-secondary">BJ</span></span>
+            </div>
+            
+            <div class="px-6 py-6 border-b border-white/10 flex items-center gap-3">
+                <div id="userAvatarContainer" class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold text-white uppercase text-sm"></div>
+                <div>
+                    <h4 id="userName" class="font-semibold text-sm truncate">Chargement...</h4>
+                    <span id="userClass" class="text-xs text-white/60">Élève</span>
+                </div>
+            </div>
+
+            <nav class="p-4 space-y-1">
+                <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+                </a>
+                <a href="courses.html" class="flex items-center gap-3 px-4 py-3 bg-secondary text-white rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="book-open" class="w-4 h-4"></i> Cours
+                </a>
+                <a href="assignments.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="clipboard-list" class="w-4 h-4"></i> Devoirs
+                </a>
+                <a href="announcements.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="megaphone" class="w-4 h-4"></i> Annonces
+                </a>
+                <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="message-square" class="w-4 h-4"></i> Messagerie
+                </a>
+                <a href="schedule.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="calendar" class="w-4 h-4"></i> Emploi du temps
+                </a>
+                <a href="grades.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="award" class="w-4 h-4"></i> Mes notes
+                </a>
+            </nav>
+        </div>
+
+        <div class="p-4 border-t border-white/10">
+            <button onclick="Auth.logout()" class="flex items-center gap-3 w-full px-4 py-3 text-white/60 hover:text-error hover:bg-red-500/10 rounded-lg text-sm font-semibold transition-all duration-200">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Se déconnecter
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <header class="h-16 bg-white border-b border-neutralBorder flex items-center justify-between px-6 shrink-0">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-bold">Supports de Cours</h1>
+            </div>
+            <div>
+                <span id="userBadge" class="px-2.5 py-1 bg-blue-50 text-primary rounded-full text-xs font-semibold uppercase">Classe</span>
+            </div>
+        </header>
+
+        <div class="p-6 max-w-7xl w-full mx-auto space-y-6">
+            
+            <!-- Filter Bar -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-white p-4 rounded-xl border border-neutralBorder">
+                <div>
+                    <h3 class="font-bold text-sm">Filtres</h3>
+                    <p class="text-xs text-neutralMuted">Recherchez vos cours par matière ou titre</p>
+                </div>
+                <div class="flex w-full sm:w-auto gap-3">
+                    <input type="text" id="searchInput" oninput="filterCourses()" placeholder="Rechercher un cours..." 
+                        class="px-3 py-2 border border-neutralBorder rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary w-full sm:w-64">
+                    <select id="subjectSelect" onchange="filterCourses()" 
+                        class="px-3 py-2 border border-neutralBorder rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary">
+                        <option value="">Toutes les matières</option>
+                        <!-- Dynamic option loading -->
+                    </select>
+                </div>
+            </div>
+
+            <!-- Courses Grid -->
+            <div id="coursesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Course Cards Loaded Dynamically -->
+                <p class="text-neutralMuted text-sm text-center col-span-full py-12">Chargement des supports de cours...</p>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Vérifier l'authentification
+        const currentUser = Auth.checkSession(['eleve']);
+        let allCourses = [];
+
+        if (currentUser) {
+            document.getElementById('userName').innerText = `${currentUser.prenom} ${currentUser.nom}`;
+            document.getElementById('userClass').innerText = `Élève · ${currentUser.classe.toUpperCase()}`;
+            document.getElementById('userBadge').innerText = currentUser.classe;
+
+            const initials = (currentUser.prenom[0] + currentUser.nom[0]).toUpperCase();
+            document.getElementById('userAvatarContainer').innerText = initials;
+
+            loadCourses();
+        }
+
+        // Charger les cours
+        async function loadCourses() {
+            const res = await API.get('/courses');
+            if (res.success) {
+                allCourses = res.data;
+                populateSubjectFilter();
+                renderCourses(allCourses);
+            } else {
+                document.getElementById('coursesGrid').innerHTML = `
+                    <p class="text-error text-sm text-center col-span-full py-12">${res.message}</p>
+                `;
+            }
+        }
+
+        // Remplir la liste déroulante des matières
+        function populateSubjectFilter() {
+            const select = document.getElementById('subjectSelect');
+            const subjects = [...new Set(allCourses.map(c => c.matiere))];
+            
+            subjects.forEach(sub => {
+                const opt = document.createElement('option');
+                opt.value = sub;
+                opt.textContent = sub;
+                select.appendChild(opt);
+            });
+        }
+
+        // Afficher les cours dans la grille
+        function renderCourses(courses) {
+            const grid = document.getElementById('coursesGrid');
+            if (courses.length === 0) {
+                grid.innerHTML = `
+                    <p class="text-neutralMuted text-sm text-center col-span-full py-12">Aucun cours trouvé pour votre classe.</p>
+                `;
+                return;
+            }
+
+            grid.innerHTML = '';
+            courses.forEach(c => {
+                const docUrl = window.location.origin + '/' + c.fichier_url;
+                
+                grid.innerHTML += `
+                    <div class="card-custom bg-white flex flex-col justify-between h-64">
+                        <div>
+                            <div class="flex justify-between items-start mb-4">
+                                <span class="px-2.5 py-0.5 bg-blue-50 text-primary text-[10px] font-bold uppercase rounded-full">
+                                    ${Utils.escapeHTML(c.matiere)}
+                                </span>
+                                <span class="text-[10px] text-neutralMuted">
+                                    ${Utils.formatDate(c.created_at, false)}
+                                </span>
+                            </div>
+                            <h3 class="font-bold text-base text-neutralText line-clamp-2">${Utils.escapeHTML(c.titre)}</h3>
+                            <p class="text-xs text-neutralMuted mt-2 line-clamp-3">${Utils.escapeHTML(c.description || 'Aucune description disponible.')}</p>
+                        </div>
+                        <div class="flex justify-between items-center mt-6 pt-4 border-t border-neutralBorder">
+                            <span class="text-[10px] text-neutralMuted">
+                                Par M. ${Utils.escapeHTML(c.enseignant_nom)}
+                            </span>
+                            <a href="${docUrl}" target="_blank" download class="px-3 py-1.5 bg-primary hover:bg-primary-light text-white text-xs font-semibold rounded-lg flex items-center gap-1 transition-all">
+                                <i data-lucide="download" class="w-3.5 h-3.5"></i> PDF
+                            </a>
+                        </div>
+                    </div>
+                `;
+            });
+            lucide.createIcons();
+        }
+
+        // Filtrer les cours
+        function filterCourses() {
+            const search = document.getElementById('searchInput').value.toLowerCase().trim();
+            const subject = document.getElementById('subjectSelect').value;
+
+            const filtered = allCourses.filter(c => {
+                const matchSearch = c.titre.toLowerCase().includes(search) || (c.description && c.description.toLowerCase().includes(search));
+                const matchSubject = subject === '' || c.matiere === subject;
+                return matchSearch && matchSubject;
+            });
+
+            renderCourses(filtered);
+        }
+    </script>
+</body>
+</html>

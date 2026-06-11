@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espace Admin — EduNet BJ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <script src="../../assets/js/lucide.min.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-neutralBg font-sans text-neutralText antialiased flex min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-primary-dark text-white flex flex-col justify-between hidden md:flex shrink-0">
+        <div>
+            <div class="h-16 flex items-center px-6 border-b border-white/10">
+                <span class="text-xl font-bold text-white">EduNet<span class="text-secondary">BJ</span></span>
+            </div>
+            
+            <div class="px-6 py-6 border-b border-white/10 flex items-center gap-3">
+                <div id="userAvatarContainer" class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold text-white uppercase text-sm"></div>
+                <div>
+                    <h4 id="userName" class="font-semibold text-sm truncate">Admin</h4>
+                    <span class="text-xs text-white/60">Administrateur</span>
+                </div>
+            </div>
+
+            <nav class="p-4 space-y-1">
+                <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 bg-secondary text-white rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+                </a>
+                <a href="users.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="users" class="w-4 h-4"></i> Utilisateurs
+                </a>
+                <a href="settings.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="settings" class="w-4 h-4"></i> Configuration
+                </a>
+            </nav>
+        </div>
+
+        <div class="p-4 border-t border-white/10">
+            <button onclick="Auth.logout()" class="flex items-center gap-3 w-full px-4 py-3 text-white/60 hover:text-error hover:bg-red-500/10 rounded-lg text-sm font-semibold transition-all duration-200">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Se déconnecter
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <header class="h-16 bg-white border-b border-neutralBorder flex items-center justify-between px-6 shrink-0">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-bold">Administration Générale</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <div id="pendingBadgeContainer" class="hidden">
+                    <a href="users.html?filter=pending" class="px-3 py-1.5 bg-warning text-white rounded-lg text-xs font-semibold flex items-center gap-1 hover:bg-warning/90 transition-all">
+                        <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> <span id="pendingCount">0</span> inscription(s) en attente
+                    </a>
+                </div>
+                <span class="px-2.5 py-1 bg-blue-50 text-primary rounded-full text-xs font-semibold uppercase">Espace Admin</span>
+            </div>
+        </header>
+
+        <div class="p-6 max-w-7xl w-full mx-auto space-y-6">
+            
+            <!-- Welcome Banner -->
+            <div class="bg-gradient-to-r from-primary-dark to-primary p-6 rounded-2xl text-white shadow-md relative overflow-hidden">
+                <div class="absolute right-0 bottom-0 opacity-10 transform translate-x-10 translate-y-10">
+                    <i data-lucide="settings" class="w-72 h-72"></i>
+                </div>
+                <div class="relative z-10">
+                    <h2 class="text-2xl font-bold">Espace d'Administration</h2>
+                    <p class="text-blue-100 text-sm mt-1">Supervisez l'ensemble de la plateforme EduNet BJ. Gérez les utilisateurs, approuvez les élèves et visualisez les indicateurs d'activité.</p>
+                </div>
+            </div>
+
+            <!-- Grid indicators -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <!-- Courses stats -->
+                <div class="bg-white p-5 rounded-2xl border border-neutralBorder shadow-sm flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-primary flex items-center justify-center shrink-0">
+                        <i data-lucide="book-open" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs text-neutralMuted">Supports publiés</span>
+                        <h4 id="statCourses" class="text-lg font-bold text-neutralText">0</h4>
+                    </div>
+                </div>
+
+                <!-- Assignments stats -->
+                <div class="bg-white p-5 rounded-2xl border border-neutralBorder shadow-sm flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-orange-50 text-secondary flex items-center justify-center shrink-0">
+                        <i data-lucide="clipboard" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs text-neutralMuted">Devoirs programmés</span>
+                        <h4 id="statAssignments" class="text-lg font-bold text-neutralText">0</h4>
+                    </div>
+                </div>
+
+                <!-- Submissions stats -->
+                <div class="bg-white p-5 rounded-2xl border border-neutralBorder shadow-sm flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-green-50 text-success flex items-center justify-center shrink-0">
+                        <i data-lucide="check-square" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs text-neutralMuted">Devoirs rendus</span>
+                        <h4 id="statSubmissions" class="text-lg font-bold text-neutralText">0</h4>
+                    </div>
+                </div>
+
+                <!-- Pending users stats -->
+                <div class="bg-white p-5 rounded-2xl border border-neutralBorder shadow-sm flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-yellow-50 text-warning flex items-center justify-center shrink-0">
+                        <i data-lucide="user-plus" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <span class="text-xs text-neutralMuted">En attente</span>
+                        <h4 id="statPendingCount" class="text-lg font-bold text-neutralText">0</h4>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- User roles distribution chart -->
+                <div class="bg-white p-6 rounded-2xl border border-neutralBorder shadow-sm">
+                    <h3 class="font-bold text-sm text-neutralText mb-4">Répartition des utilisateurs</h3>
+                    <div class="relative h-64">
+                        <canvas id="usersRoleChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Incident reports status chart -->
+                <div class="bg-white p-6 rounded-2xl border border-neutralBorder shadow-sm">
+                    <h3 class="font-bold text-sm text-neutralText mb-4">Statut des signalements</h3>
+                    <div class="relative h-64">
+                        <canvas id="reportsStatusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        const currentUser = Auth.checkSession(['admin']);
+
+        if (currentUser) {
+            document.getElementById('userName').innerText = `${currentUser.prenom} ${currentUser.nom}`;
+
+            const initials = (currentUser.prenom[0] + currentUser.nom[0]).toUpperCase();
+            document.getElementById('userAvatarContainer').innerText = initials;
+
+            loadAdminDashboard();
+        }
+
+        // Fetch stats and render charts
+        async function loadAdminDashboard() {
+            const res = await API.get('/admin/stats');
+            
+            if (res.success) {
+                const stats = res.data;
+
+                // Populate widget counters
+                document.getElementById('statCourses').innerText = stats.courses;
+                document.getElementById('statAssignments').innerText = stats.assignments;
+                document.getElementById('statSubmissions').innerText = stats.submissions;
+                document.getElementById('statPendingCount').innerText = stats.pending_users;
+
+                // Show notification badge for pending registrations
+                if (stats.pending_users > 0) {
+                    document.getElementById('pendingCount').innerText = stats.pending_users;
+                    document.getElementById('pendingBadgeContainer').classList.remove('hidden');
+                }
+
+                // Render Chart 1: User Roles Distribution
+                const roleLabels = [];
+                const roleValues = [];
+                const roleColors = ['#1C3F94', '#E8621A', '#EF4444', '#10B981']; // Primary, Secondary, Error, Success
+                
+                const roleTranslation = {
+                    'eleve': 'Élève',
+                    'enseignant': 'Enseignant',
+                    'censeur': 'Censeur',
+                    'admin': 'Admin'
+                };
+
+                stats.roles.forEach(r => {
+                    roleLabels.push(roleTranslation[r.role] || r.role);
+                    roleValues.push(r.count);
+                });
+
+                new Chart(document.getElementById('usersRoleChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: roleLabels,
+                        datasets: [{
+                            label: 'Nombre de comptes',
+                            data: roleValues,
+                            backgroundColor: roleColors.slice(0, roleLabels.length),
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+
+                // Render Chart 2: Incident Reports Status Distribution
+                const reportLabels = [];
+                const reportValues = [];
+                const reportColors = ['#EF4444', '#F59E0B', '#10B981']; // Error (ouvert), Warning (traité), Success (fermé)
+                
+                const reportTranslation = {
+                    'ouvert': 'Ouvert',
+                    'traite': 'En cours',
+                    'ferme': 'Résolu'
+                };
+
+                stats.reports.forEach(r => {
+                    reportLabels.push(reportTranslation[r.statut] || r.statut);
+                    reportValues.push(r.count);
+                });
+
+                new Chart(document.getElementById('reportsStatusChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: reportLabels,
+                        datasets: [{
+                            data: reportValues,
+                            backgroundColor: reportColors.slice(0, reportLabels.length)
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+
+                lucide.createIcons();
+            } else {
+                Utils.showToast(res.message, "error");
+            }
+        }
+    </script>
+</body>
+</html>

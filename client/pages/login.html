@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion — EduNet BJ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <script src="../assets/js/lucide.min.js"></script>
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth.js"></script>
+    <script src="../assets/js/utils.js"></script>
+</head>
+<body class="bg-neutralBg font-sans text-neutralText min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+
+    <div class="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl border border-neutralBorder shadow-lg">
+        
+        <!-- Header -->
+        <div class="text-center">
+            <h2 class="text-3xl font-extrabold text-primary">EduNet<span class="text-secondary">BJ</span></h2>
+            <p class="mt-2 text-sm text-neutralMuted">
+                Connectez-vous à votre espace scolaire numérique
+            </p>
+        </div>
+
+        <!-- Form -->
+        <form class="mt-8 space-y-6" id="loginForm">
+            <div class="space-y-4">
+                <!-- Email -->
+                <div>
+                    <label for="email" class="block text-xs font-semibold uppercase tracking-wider text-neutralMuted mb-2">Adresse Email</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-neutralMuted">
+                            <i data-lucide="mail" class="w-5 h-5"></i>
+                        </div>
+                        <input id="email" name="email" type="email" autocomplete="email" required 
+                            class="appearance-none rounded-xl relative block w-full pl-10 pr-3 py-3 border border-neutralBorder placeholder-neutralMuted text-neutralText focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm" 
+                            placeholder="exemple@domaine.com">
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <label for="password" class="block text-xs font-semibold uppercase tracking-wider text-neutralMuted mb-2">Mot de passe</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-neutralMuted">
+                            <i data-lucide="lock" class="w-5 h-5"></i>
+                        </div>
+                        <input id="password" name="password" type="password" autocomplete="current-password" required 
+                            class="appearance-none rounded-xl relative block w-full pl-10 pr-3 py-3 border border-neutralBorder placeholder-neutralMuted text-neutralText focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm" 
+                            placeholder="••••••••••••">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div>
+                <button type="submit" id="submitBtn"
+                    class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-primary hover:bg-primary-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200">
+                    <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                        <i data-lucide="log-in" class="w-5 h-5 opacity-50 group-hover:opacity-100 transition-opacity"></i>
+                    </span>
+                    Se connecter
+                </button>
+            </div>
+        </form>
+
+        <!-- Redirect to register -->
+        <div class="text-center mt-4">
+            <p class="text-sm text-neutralMuted">
+                Nouveau élève ? 
+                <a href="register.html" class="font-semibold text-secondary hover:text-secondary-light">
+                    Créer un compte
+                </a>
+            </p>
+            <div class="mt-4 border-t border-neutralBorder pt-4">
+                <a href="../index.html" class="text-xs text-neutralMuted inline-flex items-center gap-1 hover:text-primary">
+                    <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Retour à l'accueil
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Initialiser les icônes Lucide
+        lucide.createIcons();
+
+        // Gérer la soumission du formulaire
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (!email || !password) {
+                Utils.showToast("Veuillez remplir tous les champs.", "error");
+                return;
+            }
+
+            // Désactiver le bouton pendant le chargement
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = "Connexion en cours...";
+
+            const response = await API.postData('/auth/login', { email, password });
+            
+            if (response.success) {
+                Utils.showToast("Connexion réussie !", "success");
+                // Enregistrer les jetons de session
+                API.setSession(response.data.token, response.data.refresh_token, response.data.user);
+                
+                // Rediriger vers l'espace après 1 seconde
+                setTimeout(() => {
+                    Auth.redirectToDashboard(response.data.user.role);
+                }, 1000);
+            } else {
+                Utils.showToast(response.message, "error");
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `
+                    <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                        <i data-lucide="log-in" class="w-5 h-5 opacity-50"></i>
+                    </span>
+                    Se connecter
+                `;
+                lucide.createIcons();
+            }
+        });
+
+        // Détection de session active
+        const activeUser = API.getUser();
+        if (activeUser && API.getToken()) {
+            Auth.redirectToDashboard(activeUser.role);
+        }
+    </script>
+</body>
+</html>

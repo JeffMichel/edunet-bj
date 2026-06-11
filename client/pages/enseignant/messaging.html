@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messagerie — EduNet BJ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <script src="../../assets/js/lucide.min.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+    <style>
+        .chat-bubble { max-width: 75%; }
+        .chat-bubble.mine { background: hsl(221, 83%, 53%); color: white; border-radius: 18px 18px 4px 18px; }
+        .chat-bubble.other { background: white; border: 1px solid #e5e7eb; border-radius: 18px 18px 18px 4px; }
+    </style>
+</head>
+<body class="bg-neutralBg font-sans text-neutralText antialiased flex min-h-screen">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-primary-dark text-white flex flex-col justify-between hidden md:flex shrink-0">
+        <div>
+            <!-- Logo -->
+            <div class="h-16 flex items-center px-6 border-b border-white/10">
+                <span class="text-xl font-bold text-white">EduNet<span class="text-secondary">BJ</span></span>
+            </div>
+            
+            <!-- User Summary -->
+            <div class="px-6 py-6 border-b border-white/10 flex items-center gap-3">
+                <div id="userAvatarContainer" class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold text-white uppercase text-sm"></div>
+                <div>
+                    <h4 id="userName" class="font-semibold text-sm truncate">Chargement...</h4>
+                    <span id="userMatiere" class="text-xs text-white/60">Enseignant</span>
+                </div>
+            </div>
+
+            <!-- Nav Items -->
+            <nav class="p-4 space-y-1">
+                <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+                </a>
+                <a href="courses.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="book-open" class="w-4 h-4"></i> Cours
+                </a>
+                <a href="assignments.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="clipboard-list" class="w-4 h-4"></i> Devoirs
+                </a>
+                <a href="grades.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="award" class="w-4 h-4"></i> Saisie des Notes
+                </a>
+                <a href="announcements.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="megaphone" class="w-4 h-4"></i> Annonces
+                </a>
+                <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 bg-secondary text-white rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="message-square" class="w-4 h-4"></i> Messagerie
+                </a>
+            </nav>
+        </div>
+
+        <!-- Logout -->
+        <div class="p-4 border-t border-white/10">
+            <button onclick="Auth.logout()" class="flex items-center gap-3 w-full px-4 py-3 text-white/60 hover:text-error hover:bg-red-500/10 rounded-lg text-sm font-semibold transition-all duration-200">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Se déconnecter
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <header class="h-16 bg-white border-b border-neutralBorder flex items-center justify-between px-6 shrink-0">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-bold">Messagerie de classe</h1>
+            </div>
+            <div>
+                <span id="userBadge" class="px-2.5 py-1 bg-orange-50 text-secondary rounded-full text-xs font-semibold uppercase">Matière</span>
+            </div>
+        </header>
+
+        <div class="p-6 max-w-5xl w-full mx-auto space-y-6 flex-1 flex flex-col justify-between min-h-[500px]">
+            <!-- Class selector -->
+            <div class="bg-white rounded-2xl border border-neutralBorder shadow-sm p-4">
+                <div class="flex items-center gap-3 flex-wrap">
+                    <label class="text-sm font-medium text-neutralText shrink-0">Sélectionner une classe :</label>
+                    <select id="classeSelect" class="border border-neutralBorder rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary flex-1 max-w-xs">
+                        <option value="">Choisir...</option>
+                    </select>
+                    <p class="text-xs text-neutralMuted">Sélectionnez une classe pour afficher son fil de discussion.</p>
+                </div>
+            </div>
+
+            <!-- Chat Container -->
+            <div class="bg-white rounded-2xl border border-neutralBorder shadow-sm overflow-hidden flex flex-col flex-1" style="height: 550px;">
+                <div id="messages-list" class="flex-1 overflow-y-auto p-6 space-y-4">
+                    <div class="text-center text-neutralMuted py-12">
+                        <i data-lucide="message-circle" class="w-12 h-12 mx-auto mb-3 opacity-30"></i>
+                        <p class="text-sm">Veuillez sélectionner une classe pour afficher les messages.</p>
+                    </div>
+                </div>
+                <div class="border-t border-neutralBorder p-4 bg-neutralBg">
+                    <form id="messageForm" class="flex gap-3 items-end">
+                        <textarea id="messageInput" rows="1" disabled
+                            class="flex-1 rounded-xl border border-neutralBorder px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none disabled:opacity-50 disabled:bg-neutralBg"
+                            placeholder="Sélectionnez d'abord une classe..."></textarea>
+                        <button type="submit" id="sendBtn" disabled
+                            class="btn-primary flex items-center gap-2 px-4 py-3 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i data-lucide="send" class="w-4 h-4"></i>
+                            <span class="hidden sm:inline">Envoyer</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Session Check
+        const user = Auth.checkSession(['enseignant']);
+
+        if (user) {
+            document.getElementById('userName').textContent = `${user.prenom} ${user.nom}`;
+            document.getElementById('userMatiere').innerText = `Enseignant de ${user.matiere}`;
+            document.getElementById('userBadge').textContent = user.matiere;
+
+            const initials = (user.prenom[0] + user.nom[0]).toUpperCase();
+            document.getElementById('userAvatarContainer').innerText = initials;
+
+            loadClasses();
+        }
+
+        let selectedClasse = null;
+        let lastCount = 0;
+        let refreshTimer = null;
+
+        // Load classes from users endpoint
+        async function loadClasses() {
+            const res = await API.get('/users?role=eleve');
+            if (res.success && res.data) {
+                const classes = [...new Set(res.data.map(u => u.classe).filter(Boolean))].sort();
+                const select = document.getElementById('classeSelect');
+                classes.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c;
+                    opt.textContent = c;
+                    select.appendChild(opt);
+                });
+            }
+        }
+
+        document.getElementById('classeSelect').addEventListener('change', (e) => {
+            selectedClasse = e.target.value || null;
+            const input = document.getElementById('messageInput');
+            const btn = document.getElementById('sendBtn');
+            
+            if (selectedClasse) {
+                input.disabled = false;
+                btn.disabled = false;
+                input.placeholder = `Message à la classe ${selectedClasse} (Ctrl+Entrée pour envoyer)...`;
+                loadMessages();
+                if (refreshTimer) clearInterval(refreshTimer);
+                refreshTimer = setInterval(loadMessages, 10000);
+            } else {
+                input.disabled = true;
+                btn.disabled = true;
+                input.placeholder = 'Sélectionnez d\'abord une classe...';
+                document.getElementById('messages-list').innerHTML = `<div class="text-center text-neutralMuted py-12">
+                    <i data-lucide="message-circle" class="w-12 h-12 mx-auto mb-3 opacity-30"></i>
+                    <p class="text-sm">Veuillez sélectionner une classe pour afficher les messages.</p>
+                </div>`;
+                lucide.createIcons();
+            }
+        });
+
+        const list = document.getElementById('messages-list');
+
+        function renderMessages(messages) {
+            if (messages.length === 0) {
+                list.innerHTML = `<div class="text-center text-neutralMuted py-12">
+                    <i data-lucide="message-circle" class="w-12 h-12 mx-auto mb-3 opacity-30"></i>
+                    <p class="text-sm">Aucun message dans cette classe.</p>
+                </div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            list.innerHTML = messages.map(msg => {
+                const isMe = msg.expediteur_id == user?.id;
+                const time = new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                return `<div class="flex ${isMe ? 'justify-end' : 'justify-start'} gap-2">
+                    ${!isMe ? `<div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold shrink-0 mt-1">${(msg.prenom||'?')[0]}${(msg.nom||'?')[0]}</div>` : ''}
+                    <div class="chat-bubble ${isMe ? 'mine' : 'other'} px-4 py-2 shadow-sm">
+                        ${!isMe ? `<p class="text-xs font-semibold text-primary mb-1">${msg.prenom} ${msg.nom}</p>` : ''}
+                        <p class="text-sm">${Utils.escapeHtml(msg.contenu)}</p>
+                        <p class="text-xs mt-1 ${isMe ? 'text-blue-200' : 'text-neutralMuted'} text-right">${time}</p>
+                    </div>
+                    ${isMe ? `<div class="w-8 h-8 rounded-full bg-secondary text-white flex items-center justify-center text-xs font-bold shrink-0 mt-1">Moi</div>` : ''}
+                </div>`;
+            }).join('');
+
+            if (messages.length !== lastCount) {
+                list.scrollTop = list.scrollHeight;
+                lastCount = messages.length;
+            }
+        }
+
+        async function loadMessages() {
+            if (!selectedClasse) return;
+            const res = await API.get(`/messages/${encodeURIComponent(selectedClasse)}`);
+            if (res.success) renderMessages(res.data || []);
+        }
+
+        document.getElementById('messageForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const contenu = document.getElementById('messageInput').value.trim();
+            if (!contenu || !selectedClasse) return;
+            const btn = document.getElementById('sendBtn');
+            btn.disabled = true;
+            const res = await API.postData('/messages', { classe: selectedClasse, contenu });
+            if (res.success) {
+                document.getElementById('messageInput').value = '';
+                document.getElementById('messageInput').style.height = 'auto';
+                await loadMessages();
+            } else {
+                Utils.showToast(res.message || 'Erreur lors de l\'envoi', 'error');
+            }
+            btn.disabled = false;
+        });
+
+        document.getElementById('messageInput').addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') document.getElementById('messageForm').dispatchEvent(new Event('submit'));
+        });
+
+        lucide.createIcons();
+    </script>
+</body>
+</html>

@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espace Élève — EduNet BJ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <script src="../../assets/js/lucide.min.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+</head>
+<body class="bg-neutralBg font-sans text-neutralText antialiased flex min-h-screen">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-primary-dark text-white flex flex-col justify-between hidden md:flex shrink-0">
+        <div>
+            <!-- Logo -->
+            <div class="h-16 flex items-center px-6 border-b border-white/10">
+                <span class="text-xl font-bold text-white">EduNet<span class="text-secondary">BJ</span></span>
+            </div>
+            
+            <!-- User Summary -->
+            <div class="px-6 py-6 border-b border-white/10 flex items-center gap-3">
+                <div id="userAvatarContainer" class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold text-white uppercase text-sm">
+                    <!-- Initials dynamically loaded -->
+                </div>
+                <div>
+                    <h4 id="userName" class="font-semibold text-sm truncate">Chargement...</h4>
+                    <span id="userClass" class="text-xs text-white/60">Élève</span>
+                </div>
+            </div>
+
+            <!-- Nav Items -->
+            <nav class="p-4 space-y-1">
+                <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 bg-secondary text-white rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+                </a>
+                <a href="courses.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="book-open" class="w-4 h-4"></i> Cours
+                </a>
+                <a href="assignments.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="clipboard-list" class="w-4 h-4"></i> Devoirs
+                </a>
+                <a href="announcements.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="megaphone" class="w-4 h-4"></i> Annonces
+                </a>
+                <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="message-square" class="w-4 h-4"></i> Messagerie
+                </a>
+                <a href="schedule.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="calendar" class="w-4 h-4"></i> Emploi du temps
+                </a>
+                <a href="grades.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="award" class="w-4 h-4"></i> Mes notes
+                </a>
+            </nav>
+        </div>
+
+        <!-- Logout -->
+        <div class="p-4 border-t border-white/10">
+            <button onclick="Auth.logout()" class="flex items-center gap-3 w-full px-4 py-3 text-white/60 hover:text-error hover:bg-red-500/10 rounded-lg text-sm font-semibold transition-all duration-200">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Se déconnecter
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <!-- Top Navigation -->
+        <header class="h-16 bg-white border-b border-neutralBorder flex items-center justify-between px-6 shrink-0">
+            <div class="flex items-center gap-4">
+                <!-- Mobile Sidebar Toggle -->
+                <button class="md:hidden text-neutralMuted hover:text-neutralText" id="mobileMenuBtn">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+                <h1 class="text-xl font-bold">Tableau de bord</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <button onclick="openReportModal()" class="px-4 py-2 bg-red-50 hover:bg-red-100 text-error font-semibold rounded-lg text-xs flex items-center gap-1.5 border border-red-200 transition-all">
+                    <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> Signaler un incident
+                </button>
+                <div class="relative">
+                    <span id="userBadge" class="px-2.5 py-1 bg-blue-50 text-primary rounded-full text-xs font-semibold uppercase">Classe</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Body -->
+        <div class="p-6 max-w-7xl w-full mx-auto space-y-6">
+            
+            <!-- Welcome Banner -->
+            <div class="bg-gradient-to-r from-primary to-primary-light p-6 rounded-2xl text-white shadow-md relative overflow-hidden">
+                <div class="absolute right-0 bottom-0 opacity-10 transform translate-x-10 translate-y-10">
+                    <i data-lucide="graduation-cap" class="w-72 h-72"></i>
+                </div>
+                <div class="relative z-10">
+                    <h2 class="text-2xl font-bold">Bienvenue, <span id="welcomeName">Chargement...</span> !</h2>
+                    <p class="text-blue-100 text-sm mt-1">Consultez vos cours, devoirs et restez informé des annonces du collège.</p>
+                </div>
+            </div>
+
+            <!-- Grid Content -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Left column: Announcements & Pending homeworks -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Announcements -->
+                    <div class="bg-white rounded-2xl border border-neutralBorder shadow-sm p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-bold flex items-center gap-2">
+                                <i data-lucide="megaphone" class="text-primary w-5 h-5"></i> Annonces récentes
+                            </h3>
+                            <a href="announcements.html" class="text-primary text-xs font-semibold hover:underline">Voir tout</a>
+                        </div>
+                        <div id="announcementsContainer" class="space-y-4">
+                            <p class="text-neutralMuted text-sm text-center py-4">Chargement des annonces...</p>
+                        </div>
+                    </div>
+
+                    <!-- Assignments -->
+                    <div class="bg-white rounded-2xl border border-neutralBorder shadow-sm p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-bold flex items-center gap-2">
+                                <i data-lucide="clipboard-list" class="text-secondary w-5 h-5"></i> Devoirs à rendre
+                            </h3>
+                            <a href="assignments.html" class="text-primary text-xs font-semibold hover:underline">Tous les devoirs</a>
+                        </div>
+                        <div id="assignmentsContainer" class="space-y-4">
+                            <p class="text-neutralMuted text-sm text-center py-4">Chargement des devoirs...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right column: Schedule & Grades -->
+                <div class="space-y-6">
+                    <!-- Daily Schedule -->
+                    <div class="bg-white rounded-2xl border border-neutralBorder shadow-sm p-6">
+                        <h3 class="text-lg font-bold flex items-center gap-2 mb-6">
+                            <i data-lucide="calendar" class="text-success w-5 h-5"></i> Emploi du temps
+                        </h3>
+                        <div id="scheduleContainer" class="space-y-3">
+                            <p class="text-neutralMuted text-sm text-center py-4">Chargement de l'emploi du temps...</p>
+                        </div>
+                    </div>
+
+                    <!-- Recent Grades -->
+                    <div class="bg-white rounded-2xl border border-neutralBorder shadow-sm p-6">
+                        <h3 class="text-lg font-bold flex items-center gap-2 mb-6">
+                            <i data-lucide="award" class="text-amber-500 w-5 h-5"></i> Dernières notes
+                        </h3>
+                        <div id="gradesContainer" class="space-y-3">
+                            <p class="text-neutralMuted text-sm text-center py-4">Chargement de vos notes...</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Incident Report Modal -->
+    <div id="reportModal" class="fixed inset-0 bg-neutralText/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white w-full max-w-md p-6 rounded-2xl border border-neutralBorder shadow-xl relative animate-scale-up">
+            <button onclick="closeReportModal()" class="absolute top-4 right-4 text-neutralMuted hover:text-neutralText">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <h3 class="text-lg font-bold text-primary mb-4 flex items-center gap-1.5">
+                <i data-lucide="alert-triangle" class="text-error"></i> Signaler un incident
+            </h3>
+            
+            <form id="reportForm" class="space-y-4">
+                <div>
+                    <label for="reportCible" class="block text-xs font-semibold uppercase tracking-wider text-neutralMuted mb-2">Membre du personnel à signaler</label>
+                    <select id="reportCible" name="cible_id" required
+                        class="appearance-none rounded-xl relative block w-full px-3 py-3 border border-neutralBorder text-neutralText bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm">
+                        <option value="" disabled selected>Sélectionnez un membre</option>
+                        <!-- Dynamic list -->
+                    </select>
+                </div>
+                <div>
+                    <label for="reportMotif" class="block text-xs font-semibold uppercase tracking-wider text-neutralMuted mb-2">Description des faits</label>
+                    <textarea id="reportMotif" name="motif" rows="4" required
+                        class="appearance-none rounded-xl relative block w-full px-3 py-3 border border-neutralBorder placeholder-neutralMuted text-neutralText focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                        placeholder="Veuillez décrire brièvement l'incident de manière objective."></textarea>
+                </div>
+                <div class="pt-2 flex gap-3">
+                    <button type="button" onclick="closeReportModal()" class="flex-1 py-3 px-4 bg-neutralBg hover:bg-neutralBorder text-neutralText font-semibold rounded-xl text-sm transition-all text-center">
+                        Annuler
+                    </button>
+                    <button type="submit" class="flex-1 py-3 px-4 bg-error hover:bg-red-600 text-white font-semibold rounded-xl text-sm transition-all">
+                        Envoyer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Vérifier l'authentification
+        const currentUser = Auth.checkSession(['eleve']);
+
+        // Charger l'identité de l'élève
+        if (currentUser) {
+            document.getElementById('userName').innerText = `${currentUser.prenom} ${currentUser.nom}`;
+            document.getElementById('welcomeName').innerText = currentUser.prenom;
+            document.getElementById('userClass').innerText = `Élève · ${currentUser.classe.toUpperCase()}`;
+            document.getElementById('userBadge').innerText = currentUser.classe;
+
+            // Avatar avec les initiales
+            const initials = (currentUser.prenom[0] + currentUser.nom[0]).toUpperCase();
+            document.getElementById('userAvatarContainer').innerText = initials;
+
+            // Lancer le chargement des widgets
+            loadAnnouncements();
+            loadAssignments();
+            loadSchedule();
+            loadGrades();
+            loadStaffForReport();
+        }
+
+        // 1. Charger les annonces
+        async function loadAnnouncements() {
+            const container = document.getElementById('announcementsContainer');
+            const res = await API.get('/announcements');
+            if (res.success && res.data.length > 0) {
+                container.innerHTML = '';
+                // Prendre les 3 dernières annonces
+                res.data.slice(0, 3).forEach(ann => {
+                    const avatarText = ann.auteur_prenom[0] + ann.auteur_nom[0];
+                    container.innerHTML += `
+                        <div class="flex gap-4 p-4 border border-neutralBorder rounded-xl hover:bg-neutralBg/30 transition-all">
+                            <div class="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs uppercase shrink-0">
+                                ${avatarText}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-start gap-2">
+                                    <h4 class="font-bold text-sm text-neutralText truncate">${Utils.escapeHTML(ann.titre)}</h4>
+                                    <span class="text-xs text-neutralMuted font-medium whitespace-nowrap">${Utils.formatDate(ann.created_at, false)}</span>
+                                </div>
+                                <p class="text-xs text-neutralMuted mt-1 line-clamp-2">${Utils.escapeHTML(ann.contenu)}</p>
+                                <span class="text-[10px] bg-blue-50 text-primary px-2 py-0.5 rounded-full mt-2 inline-block font-semibold">
+                                    Par ${Utils.escapeHTML(ann.auteur_prenom)} ${Utils.escapeHTML(ann.auteur_nom)}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                container.innerHTML = '<p class="text-neutralMuted text-xs text-center py-4">Aucune annonce de classe pour le moment.</p>';
+            }
+        }
+
+        // 2. Charger les devoirs
+        async function loadAssignments() {
+            const container = document.getElementById('assignmentsContainer');
+            const res = await API.get('/assignments');
+            if (res.success && res.data.length > 0) {
+                container.innerHTML = '';
+                // Prendre les devoirs non rendus en priorité
+                const pending = res.data.filter(a => !a.submission_id);
+                const displayList = pending.length > 0 ? pending : res.data;
+                
+                displayList.slice(0, 3).forEach(ass => {
+                    const isSubmitted = !!ass.submission_id;
+                    const badgeClass = isSubmitted ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning';
+                    const badgeText = isSubmitted ? 'Rendu' : 'À rendre';
+                    
+                    container.innerHTML += `
+                        <div class="flex justify-between items-center p-4 border border-neutralBorder rounded-xl hover:bg-neutralBg/30 transition-all gap-4">
+                            <div class="min-w-0">
+                                <h4 class="font-bold text-sm text-neutralText truncate">${Utils.escapeHTML(ass.titre)}</h4>
+                                <div class="flex items-center gap-2 mt-1 text-xs text-neutralMuted">
+                                    <span>Matière : <strong class="text-neutralText">${Utils.escapeHTML(ass.matiere)}</strong></span>
+                                    <span>•</span>
+                                    <span>Limite : <strong class="text-error">${Utils.formatDate(ass.date_limite)}</strong></span>
+                                </div>
+                            </div>
+                            <span class="px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${badgeClass}">
+                                ${badgeText}
+                            </span>
+                        </div>
+                    `;
+                });
+            } else {
+                container.innerHTML = '<p class="text-neutralMuted text-xs text-center py-4">Aucun devoir programmé.</p>';
+            }
+        }
+
+        // 3. Charger l'emploi du temps (Aujourd'hui)
+        async function loadSchedule() {
+            const container = document.getElementById('scheduleContainer');
+            const currentDayName = new Date().toLocaleDateString('fr-FR', { weekday: 'long' }).toLowerCase();
+            
+            const res = await API.get('/schedule/' + encodeURIComponent(currentUser.classe));
+            if (res.success && res.data.length > 0) {
+                // Filtrer pour aujourd'hui
+                const todaySlots = res.data.filter(s => s.jour.toLowerCase() === currentDayName);
+                if (todaySlots.length > 0) {
+                    container.innerHTML = '';
+                    todaySlots.forEach(slot => {
+                        container.innerHTML += `
+                            <div class="flex items-center justify-between p-3 bg-neutralBg rounded-xl border border-neutralBorder">
+                                <div>
+                                    <h4 class="font-bold text-sm text-neutralText">${Utils.escapeHTML(slot.matiere)}</h4>
+                                    <span class="text-xs text-neutralMuted">M. ${Utils.escapeHTML(slot.enseignant_nom)}</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-xs font-bold text-primary">${Utils.formatTime(slot.heure_debut)} - ${Utils.formatTime(slot.heure_fin)}</span>
+                                    <p class="text-[10px] text-neutralMuted">Salle : ${Utils.escapeHTML(slot.salle || 'N/A')}</p>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    container.innerHTML = '<p class="text-neutralMuted text-xs text-center py-4">Aucun cours aujourd\'hui (${currentDayName}).</p>';
+                }
+            } else {
+                container.innerHTML = '<p class="text-neutralMuted text-xs text-center py-4">Aucun emploi du temps disponible.</p>';
+            }
+        }
+
+        // 4. Charger les notes
+        async function loadGrades() {
+            const container = document.getElementById('gradesContainer');
+            const res = await API.get('/grades/me');
+            if (res.success && res.data.length > 0) {
+                container.innerHTML = '';
+                res.data.slice(0, 3).forEach(grade => {
+                    container.innerHTML += `
+                        <div class="flex items-center justify-between p-3 border border-neutralBorder rounded-xl">
+                            <div>
+                                <h4 class="font-bold text-sm text-neutralText">${Utils.escapeHTML(grade.matiere)}</h4>
+                                <p class="text-[10px] text-neutralMuted">${Utils.escapeHTML(grade.appreciation || 'Pas d\'appréciation')}</p>
+                            </div>
+                            <span class="text-base font-bold text-secondary">
+                                ${parseFloat(grade.note).toFixed(2)}/20
+                            </span>
+                        </div>
+                    `;
+                });
+            } else {
+                container.innerHTML = '<p class="text-neutralMuted text-xs text-center py-4">Aucune note enregistrée.</p>';
+            }
+        }
+
+        // 5. Charger le staff pour les signalements
+        async function loadStaffForReport() {
+            const select = document.getElementById('reportCible');
+            const res = await API.get('/users');
+            if (res.success && res.data.length > 0) {
+                res.data.forEach(member => {
+                    const option = document.createElement('option');
+                    option.value = member.id;
+                    const roleLabel = Utils.getRoleLabel(member.role);
+                    option.textContent = `${member.prenom} ${member.nom} (${roleLabel} - ${member.matiere || 'Administration'})`;
+                    select.appendChild(option);
+                });
+            }
+        }
+
+        // Gérer l'envoi de signalement
+        document.getElementById('reportForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const cible_id = document.getElementById('reportCible').value;
+            const motif = document.getElementById('reportMotif').value.trim();
+
+            if (!cible_id || !motif) {
+                Utils.showToast("Veuillez remplir tous les champs.", "error");
+                return;
+            }
+
+            const res = await API.postData('/reports', { cible_id, motif });
+            if (res.success) {
+                Utils.showToast("Signalement envoyé avec succès aux censeurs.", "success");
+                closeReportModal();
+                document.getElementById('reportForm').reset();
+            } else {
+                Utils.showToast(res.message, "error");
+            }
+        });
+
+        // Modal triggers
+        function openReportModal() {
+            document.getElementById('reportModal').classList.remove('hidden');
+        }
+        function closeReportModal() {
+            document.getElementById('reportModal').classList.add('hidden');
+        }
+
+        // Menu mobile toggle
+        document.getElementById('mobileMenuBtn')?.addEventListener('click', () => {
+            Utils.showToast("Menu mobile disponible sur grand écran ou utilisez le panneau principal.", "warning");
+        });
+
+        lucide.createIcons();
+    </script>
+</body>
+</html>

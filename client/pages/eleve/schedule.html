@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emploi du temps — EduNet BJ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <script src="../../assets/js/lucide.min.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+    <style>
+        .day-column { min-width: 140px; }
+        .time-slot { height: 80px; }
+        .course-block {
+            border-left: 4px solid;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,255,255,0.8));
+        }
+    </style>
+</head>
+<body class="bg-neutralBg font-sans text-neutralText antialiased flex min-h-screen">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-primary-dark text-white flex flex-col justify-between hidden md:flex shrink-0">
+        <div>
+            <!-- Logo -->
+            <div class="h-16 flex items-center px-6 border-b border-white/10">
+                <span class="text-xl font-bold text-white">EduNet<span class="text-secondary">BJ</span></span>
+            </div>
+            
+            <!-- User Summary -->
+            <div class="px-6 py-6 border-b border-white/10 flex items-center gap-3">
+                <div id="userAvatarContainer" class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold text-white uppercase text-sm">
+                    <!-- Initials dynamically loaded -->
+                </div>
+                <div>
+                    <h4 id="userName" class="font-semibold text-sm truncate">Chargement...</h4>
+                    <span id="userClass" class="text-xs text-white/60">Élève</span>
+                </div>
+            </div>
+
+            <!-- Nav Items -->
+            <nav class="p-4 space-y-1">
+                <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+                </a>
+                <a href="courses.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="book-open" class="w-4 h-4"></i> Cours
+                </a>
+                <a href="assignments.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="clipboard-list" class="w-4 h-4"></i> Devoirs
+                </a>
+                <a href="announcements.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="megaphone" class="w-4 h-4"></i> Annonces
+                </a>
+                <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="message-square" class="w-4 h-4"></i> Messagerie
+                </a>
+                <a href="schedule.html" class="flex items-center gap-3 px-4 py-3 bg-secondary text-white rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="calendar" class="w-4 h-4"></i> Emploi du temps
+                </a>
+                <a href="grades.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="award" class="w-4 h-4"></i> Mes notes
+                </a>
+            </nav>
+        </div>
+
+        <!-- Logout -->
+        <div class="p-4 border-t border-white/10">
+            <button onclick="Auth.logout()" class="flex items-center gap-3 w-full px-4 py-3 text-white/60 hover:text-error hover:bg-red-500/10 rounded-lg text-sm font-semibold transition-all duration-200">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Se déconnecter
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <header class="h-16 bg-white border-b border-neutralBorder flex items-center justify-between px-6 shrink-0">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-bold">Emploi du temps</h1>
+            </div>
+            <div>
+                <span id="userBadge" class="px-2.5 py-1 bg-blue-50 text-primary rounded-full text-xs font-semibold uppercase">Classe</span>
+            </div>
+        </header>
+
+        <div class="p-6 max-w-7xl w-full mx-auto space-y-6">
+            <!-- Header Info -->
+            <div class="flex items-center justify-between">
+                <div>
+                    <p id="classeLabel" class="text-neutralMuted mt-1 text-sm">Chargement...</p>
+                </div>
+                <div class="flex items-center gap-2 bg-white border border-neutralBorder rounded-xl px-4 py-2">
+                    <i data-lucide="calendar" class="w-4 h-4 text-primary"></i>
+                    <span class="text-sm font-medium text-neutralText">Semaine courante</span>
+                </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="flex flex-wrap gap-3 mb-4" id="legend"></div>
+
+            <!-- Timetable grid -->
+            <div class="bg-white rounded-2xl border border-neutralBorder shadow-sm overflow-hidden">
+                <div id="scheduleGrid" class="overflow-x-auto">
+                    <div class="text-center py-16 text-neutralMuted">
+                        <i data-lucide="loader" class="w-10 h-10 mx-auto mb-3 opacity-40 animate-spin"></i>
+                        <p>Chargement de l'emploi du temps...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty state -->
+            <div id="emptyState" class="hidden text-center py-16 bg-white rounded-2xl border border-neutralBorder">
+                <i data-lucide="calendar-x" class="w-16 h-16 mx-auto mb-4 text-neutralMuted opacity-30"></i>
+                <h3 class="text-lg font-semibold text-neutralText mb-2">Pas encore d'emploi du temps</h3>
+                <p class="text-neutralMuted text-sm">L'emploi du temps de votre classe n'a pas encore été défini par l'administration.</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Session Check
+        const user = Auth.checkSession(['eleve']);
+
+        if (user) {
+            document.getElementById('userName').textContent = `${user.prenom} ${user.nom}`;
+            document.getElementById('userClass').textContent = `Élève · ${user.classe.toUpperCase()}`;
+            document.getElementById('userBadge').textContent = user.classe;
+            document.getElementById('classeLabel').textContent = `Classe : ${user.classe.toUpperCase()}`;
+
+            const initials = (user.prenom[0] + user.nom[0]).toUpperCase();
+            document.getElementById('userAvatarContainer').innerText = initials;
+
+            loadSchedule();
+        }
+
+        const DAYS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+        const DAY_LABELS = { lundi: 'Lundi', mardi: 'Mardi', mercredi: 'Mercredi', jeudi: 'Jeudi', vendredi: 'Vendredi', samedi: 'Samedi' };
+        
+        const COLORS = [
+            { border: '#3b82f6', bg: '#eff6ff', text: '#1d4ed8' },
+            { border: '#10b981', bg: '#ecfdf5', text: '#065f46' },
+            { border: '#f59e0b', bg: '#fffbeb', text: '#92400e' },
+            { border: '#ef4444', bg: '#fef2f2', text: '#991b1b' },
+            { border: '#8b5cf6', bg: '#f5f3ff', text: '#5b21b6' },
+            { border: '#ec4899', bg: '#fdf2f8', text: '#9d174d' },
+            { border: '#06b6d4', bg: '#ecfeff', text: '#155e75' },
+            { border: '#84cc16', bg: '#f7fee7', text: '#3f6212' },
+        ];
+
+        function getColor(matiere) {
+            let hash = 0;
+            for (let c of matiere) hash = (hash * 31 + c.charCodeAt(0)) % COLORS.length;
+            return COLORS[hash];
+        }
+
+        function buildGrid(slots) {
+            // Group by day
+            const byDay = {};
+            DAYS.forEach(d => byDay[d] = []);
+            slots.forEach(s => { if (byDay[s.jour]) byDay[s.jour].push(s); });
+
+            // Check if there are any slots
+            const hasSlots = slots.length > 0;
+            if (!hasSlots) {
+                document.getElementById('scheduleGrid').style.display = 'none';
+                document.getElementById('emptyState').classList.remove('hidden');
+                return;
+            }
+
+            // Legend: unique subjects
+            const subjects = [...new Set(slots.map(s => s.matiere))];
+            const legendHtml = subjects.map(m => {
+                const c = getColor(m);
+                return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium" style="background:${c.bg}; color:${c.text}; border: 1px solid ${c.border}">
+                    <span class="w-2 h-2 rounded-full" style="background:${c.border}"></span> ${m}
+                </span>`;
+            }).join('');
+            document.getElementById('legend').innerHTML = legendHtml;
+
+            // Build grid
+            const activeDays = DAYS.filter(d => byDay[d].length > 0);
+
+            let html = `<table class="w-full border-collapse" style="min-width: 600px;">
+                <thead>
+                    <tr>
+                        <th class="p-3 text-left text-xs font-semibold text-neutralMuted border-b border-neutralBorder w-20">Heure</th>
+                        ${activeDays.map(d => `<th class="p-3 text-center text-sm font-semibold text-white border-b border-neutralBorder day-header" style="background: #1C3F94">${DAY_LABELS[d]}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>`;
+
+            // Collect all time ranges
+            const times = [...new Set(slots.map(s => s.heure_debut))].sort();
+            
+            times.forEach((time, i) => {
+                const isEven = i % 2 === 0;
+                html += `<tr class="${isEven ? 'bg-white' : 'bg-neutralBg/50'}">
+                    <td class="p-3 text-xs font-semibold text-neutralMuted border-b border-neutralBorder whitespace-nowrap align-top">${time}</td>`;
+                
+                activeDays.forEach(day => {
+                    const slot = byDay[day].find(s => s.heure_debut === time);
+                    if (slot) {
+                        const c = getColor(slot.matiere);
+                        html += `<td class="p-2 border-b border-neutralBorder align-top">
+                            <div class="course-block rounded-lg p-2 h-full" style="border-left-color: ${c.border}; background: ${c.bg};">
+                                <p class="text-xs font-bold" style="color: ${c.text}">${slot.matiere}</p>
+                                <p class="text-[10px] text-neutralMuted mt-0.5">${slot.heure_debut} – ${slot.heure_fin}</p>
+                                <p class="text-[10px] text-neutralMuted">M. ${slot.enseignant_nom}</p>
+                                ${slot.salle ? `<p class="text-[10px] text-neutralMuted"><i>Salle ${slot.salle}</i></p>` : ''}
+                            </div>
+                        </td>`;
+                    } else {
+                        html += `<td class="p-2 border-b border-neutralBorder"></td>`;
+                    }
+                });
+                html += `</tr>`;
+            });
+
+            html += `</tbody></table>`;
+            document.getElementById('scheduleGrid').innerHTML = html;
+        }
+
+        async function loadSchedule() {
+            const res = await API.get('/schedule/' + encodeURIComponent(user.classe));
+            if (res.success) {
+                buildGrid(res.data || []);
+            } else {
+                Utils.showToast('Erreur lors du chargement de l\'emploi du temps', 'error');
+            }
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>

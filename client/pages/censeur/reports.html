@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signalements de Discipline — EduNet BJ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <script src="../../assets/js/lucide.min.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+</head>
+<body class="bg-neutralBg font-sans text-neutralText antialiased flex min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-primary-dark text-white flex flex-col justify-between hidden md:flex shrink-0">
+        <div>
+            <div class="h-16 flex items-center px-6 border-b border-white/10">
+                <span class="text-xl font-bold text-white">EduNet<span class="text-secondary">BJ</span></span>
+            </div>
+            
+            <div class="px-6 py-6 border-b border-white/10 flex items-center gap-3">
+                <div id="userAvatarContainer" class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold text-white uppercase text-sm"></div>
+                <div>
+                    <h4 id="userName" class="font-semibold text-sm truncate">Chargement...</h4>
+                    <span class="text-xs text-white/60">Censeur</span>
+                </div>
+            </div>
+
+            <nav class="p-4 space-y-1">
+                <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+                </a>
+                <a href="reports.html" class="flex items-center gap-3 px-4 py-3 bg-secondary text-white rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="alert-triangle" class="w-4 h-4"></i> Discipline / Signalements
+                </a>
+            </nav>
+        </div>
+
+        <div class="p-4 border-t border-white/10">
+            <button onclick="Auth.logout()" class="flex items-center gap-3 w-full px-4 py-3 text-white/60 hover:text-error hover:bg-red-500/10 rounded-lg text-sm font-semibold transition-all duration-200">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Se déconnecter
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <header class="h-16 bg-white border-b border-neutralBorder flex items-center justify-between px-6 shrink-0">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-bold">Rapports d'Incidents & Discipline</h1>
+            </div>
+        </header>
+
+        <div class="p-6 max-w-7xl w-full mx-auto space-y-6">
+            
+            <!-- Filter Tabs -->
+            <div class="flex border-b border-neutralBorder gap-6 text-sm">
+                <button onclick="switchTab('ouvert')" id="tabOpen" class="pb-3 border-b-2 border-primary font-bold text-primary">
+                    Incidents ouverts
+                </button>
+                <button onclick="switchTab('traite')" id="tabPending" class="pb-3 border-b-2 border-transparent font-medium text-neutralMuted hover:text-neutralText">
+                    En cours de traitement
+                </button>
+                <button onclick="switchTab('ferme')" id="tabClosed" class="pb-3 border-b-2 border-transparent font-medium text-neutralMuted hover:text-neutralText">
+                    Fermés / Résolus
+                </button>
+            </div>
+
+            <!-- Table Container -->
+            <div class="bg-white rounded-2xl border border-neutralBorder shadow-sm p-6">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="border-b border-neutralBorder text-neutralMuted uppercase text-xs font-semibold">
+                                <th class="py-3 px-4">Éléments / Signalé</th>
+                                <th class="py-3 px-4">Motif de l'incident</th>
+                                <th class="py-3 px-4">Signaleur</th>
+                                <th class="py-3 px-4">Date de signalement</th>
+                                <th class="py-3 px-4 text-right">Actions de traitement</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportsTableBody">
+                            <tr>
+                                <td colspan="5" class="text-center py-8 text-neutralMuted">Chargement des rapports...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        const currentUser = Auth.checkSession(['censeur']);
+        let allReports = [];
+        let activeTab = 'ouvert';
+
+        if (currentUser) {
+            document.getElementById('userName').innerText = `${currentUser.prenom} ${currentUser.nom}`;
+
+            const initials = (currentUser.prenom[0] + currentUser.nom[0]).toUpperCase();
+            document.getElementById('userAvatarContainer').innerText = initials;
+
+            loadReports();
+        }
+
+        // Fetch reports
+        async function loadReports() {
+            const res = await API.get('/reports');
+            if (res.success) {
+                allReports = res.data;
+                renderReports();
+            } else {
+                document.getElementById('reportsTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-8 text-error font-medium">${res.message}</td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Render reports in table
+        function renderReports() {
+            const tbody = document.getElementById('reportsTableBody');
+            const list = allReports.filter(r => r.statut === activeTab);
+
+            if (list.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-8 text-neutralMuted">Aucun rapport d'incident dans cette catégorie.</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            list.forEach(r => {
+                const targetRole = Utils.getRoleLabel(r.cible_role);
+                const reporterRole = Utils.getRoleLabel(r.signaleur_role);
+                
+                let actionsHTML = '';
+                if (r.statut === 'ouvert') {
+                    actionsHTML = `
+                        <button onclick="updateReportStatus(${r.id}, 'traite')" class="px-2.5 py-1 bg-warning/10 hover:bg-warning/20 text-warning text-xs font-semibold rounded-lg transition-all">
+                            Traiter
+                        </button>
+                    `;
+                } else if (r.statut === 'traite') {
+                    actionsHTML = `
+                        <div class="flex gap-2 justify-end">
+                            <button onclick="updateReportStatus(${r.id}, 'ouvert')" class="px-2 py-1 bg-neutralBg hover:bg-neutralBorder text-neutralMuted text-xs font-semibold rounded-lg transition-all">
+                                Rouvrir
+                            </button>
+                            <button onclick="updateReportStatus(${r.id}, 'ferme')" class="px-2.5 py-1 bg-success/10 hover:bg-success/20 text-success text-xs font-semibold rounded-lg transition-all">
+                                Fermer / Clore
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    actionsHTML = `
+                        <button onclick="updateReportStatus(${r.id}, 'ouvert')" class="px-2 py-1 bg-neutralBg hover:bg-neutralBorder text-neutralMuted text-xs font-semibold rounded-lg transition-all">
+                            Rouvrir
+                        </button>
+                    `;
+                }
+
+                tbody.innerHTML += `
+                    <tr class="border-b border-neutralBorder hover:bg-neutralBg/20 transition-all text-xs md:text-sm">
+                        <td class="py-4 px-4 font-bold text-neutralText">
+                            <span class="text-error font-extrabold">${Utils.escapeHTML(r.cible_prenom)} ${Utils.escapeHTML(r.cible_nom)}</span>
+                            <div class="text-[10px] text-neutralMuted font-normal mt-0.5">${targetRole} · ${r.cible_classe ? r.cible_classe.toUpperCase() : 'Non assigné'}</div>
+                        </td>
+                        <td class="py-4 px-4 text-neutralText max-w-xs break-words">${Utils.escapeHTML(r.motif)}</td>
+                        <td class="py-4 px-4 font-medium text-neutralMuted">
+                            ${Utils.escapeHTML(r.signaleur_prenom)} ${Utils.escapeHTML(r.signaleur_nom)}
+                            <div class="text-[9px] text-neutralMuted font-normal mt-0.5">${reporterRole}</div>
+                        </td>
+                        <td class="py-4 px-4 text-neutralMuted">${Utils.formatDate(r.created_at)}</td>
+                        <td class="py-4 px-4 text-right">${actionsHTML}</td>
+                    </tr>
+                `;
+            });
+            lucide.createIcons();
+        }
+
+        // Update Report Status
+        async function updateReportStatus(id, newStatus) {
+            const res = await API.put(`/reports/${id}`, { statut: newStatus });
+            if (res.success) {
+                Utils.showToast("Statut du signalement mis à jour.", "success");
+                loadReports(); // Recharger
+            } else {
+                Utils.showToast(res.message, "error");
+            }
+        }
+
+        // Switch active tab
+        function switchTab(tab) {
+            activeTab = tab;
+            const tabOpen = document.getElementById('tabOpen');
+            const tabPending = document.getElementById('tabPending');
+            const tabClosed = document.getElementById('tabClosed');
+
+            tabOpen.className = "pb-3 border-b-2 border-transparent font-medium text-neutralMuted hover:text-neutralText";
+            tabPending.className = "pb-3 border-b-2 border-transparent font-medium text-neutralMuted hover:text-neutralText";
+            tabClosed.className = "pb-3 border-b-2 border-transparent font-medium text-neutralMuted hover:text-neutralText";
+
+            if (tab === 'ouvert') {
+                tabOpen.className = "pb-3 border-b-2 border-primary font-bold text-primary";
+            } else if (tab === 'traite') {
+                tabPending.className = "pb-3 border-b-2 border-primary font-bold text-primary";
+            } else {
+                tabClosed.className = "pb-3 border-b-2 border-primary font-bold text-primary";
+            }
+
+            renderReports();
+        }
+    </script>
+</body>
+</html>

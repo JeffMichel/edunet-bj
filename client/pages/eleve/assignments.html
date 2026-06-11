@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Devoirs — EduNet BJ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <script src="../../assets/js/lucide.min.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+</head>
+<body class="bg-neutralBg font-sans text-neutralText antialiased flex min-h-screen">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-primary-dark text-white flex flex-col justify-between hidden md:flex shrink-0">
+        <div>
+            <div class="h-16 flex items-center px-6 border-b border-white/10">
+                <span class="text-xl font-bold text-white">EduNet<span class="text-secondary">BJ</span></span>
+            </div>
+            
+            <div class="px-6 py-6 border-b border-white/10 flex items-center gap-3">
+                <div id="userAvatarContainer" class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold text-white uppercase text-sm"></div>
+                <div>
+                    <h4 id="userName" class="font-semibold text-sm truncate">Chargement...</h4>
+                    <span id="userClass" class="text-xs text-white/60">Élève</span>
+                </div>
+            </div>
+
+            <nav class="p-4 space-y-1">
+                <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+                </a>
+                <a href="courses.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="book-open" class="w-4 h-4"></i> Cours
+                </a>
+                <a href="assignments.html" class="flex items-center gap-3 px-4 py-3 bg-secondary text-white rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="clipboard-list" class="w-4 h-4"></i> Devoirs
+                </a>
+                <a href="announcements.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="megaphone" class="w-4 h-4"></i> Annonces
+                </a>
+                <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="message-square" class="w-4 h-4"></i> Messagerie
+                </a>
+                <a href="schedule.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="calendar" class="w-4 h-4"></i> Emploi du temps
+                </a>
+                <a href="grades.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="award" class="w-4 h-4"></i> Mes notes
+                </a>
+            </nav>
+        </div>
+
+        <div class="p-4 border-t border-white/10">
+            <button onclick="Auth.logout()" class="flex items-center gap-3 w-full px-4 py-3 text-white/60 hover:text-error hover:bg-red-500/10 rounded-lg text-sm font-semibold transition-all duration-200">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Se déconnecter
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <header class="h-16 bg-white border-b border-neutralBorder flex items-center justify-between px-6 shrink-0">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-bold">Devoirs et Travaux de classe</h1>
+            </div>
+            <div>
+                <span id="userBadge" class="px-2.5 py-1 bg-blue-50 text-primary rounded-full text-xs font-semibold uppercase">Classe</span>
+            </div>
+        </header>
+
+        <div class="p-6 max-w-7xl w-full mx-auto space-y-6">
+            
+            <!-- Filter Categories Tabs -->
+            <div class="flex border-b border-neutralBorder gap-6 text-sm">
+                <button onclick="switchTab('pending')" id="tabPending" class="pb-3 border-b-2 border-primary font-bold text-primary">
+                    Devoirs à rendre
+                </button>
+                <button onclick="switchTab('submitted')" id="tabSubmitted" class="pb-3 border-b-2 border-transparent font-medium text-neutralMuted hover:text-neutralText">
+                    Rendus et notes
+                </button>
+            </div>
+
+            <!-- List container -->
+            <div id="assignmentsList" class="space-y-4">
+                <p class="text-neutralMuted text-sm text-center py-12">Chargement des devoirs...</p>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Submission Modal -->
+    <div id="submitModal" class="fixed inset-0 bg-neutralText/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white w-full max-w-md p-6 rounded-2xl border border-neutralBorder shadow-xl relative animate-scale-up">
+            <button onclick="closeSubmitModal()" class="absolute top-4 right-4 text-neutralMuted hover:text-neutralText">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <h3 class="text-lg font-bold text-primary mb-4 flex items-center gap-2">
+                <i data-lucide="upload-cloud"></i> Rendre un devoir
+            </h3>
+            <p id="modalAssignmentTitle" class="text-sm font-semibold text-neutralText mb-2"></p>
+            <p id="modalAssignmentMatiere" class="text-xs text-neutralMuted mb-6"></p>
+
+            <form id="submitForm" class="space-y-4">
+                <input type="hidden" id="modalAssignmentId">
+                <div>
+                    <label for="submissionFile" class="block text-xs font-semibold uppercase tracking-wider text-neutralMuted mb-2">Fichier de votre copie (Format PDF uniquement)</label>
+                    <div class="border-2 border-dashed border-neutralBorder hover:border-primary rounded-xl p-8 text-center cursor-pointer transition-all relative">
+                        <input type="file" id="submissionFile" name="fichier" accept="application/pdf" required 
+                            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                        <div class="flex flex-col items-center">
+                            <i data-lucide="file-text" class="w-8 h-8 text-neutralMuted mb-2"></i>
+                            <span id="fileNameDisplay" class="text-sm font-medium text-neutralText">Cliquez pour choisir un PDF</span>
+                            <span class="text-xs text-neutralMuted mt-1">Taille maximale : 5 Mo</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-4 flex gap-3">
+                    <button type="button" onclick="closeSubmitModal()" class="flex-1 py-3 px-4 bg-neutralBg hover:bg-neutralBorder text-neutralText font-semibold rounded-xl text-sm transition-all">
+                        Annuler
+                    </button>
+                    <button type="submit" id="modalSubmitBtn" class="flex-1 py-3 px-4 bg-primary hover:bg-primary-light text-white font-semibold rounded-xl text-sm transition-all">
+                        Soumettre la copie
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Session Check
+        const currentUser = Auth.checkSession(['eleve']);
+        let allAssignments = [];
+        let activeTab = 'pending';
+
+        if (currentUser) {
+            document.getElementById('userName').innerText = `${currentUser.prenom} ${currentUser.nom}`;
+            document.getElementById('userClass').innerText = `Élève · ${currentUser.classe.toUpperCase()}`;
+            document.getElementById('userBadge').innerText = currentUser.classe;
+
+            const initials = (currentUser.prenom[0] + currentUser.nom[0]).toUpperCase();
+            document.getElementById('userAvatarContainer').innerText = initials;
+
+            loadAssignments();
+        }
+
+        // File upload UI name display handler
+        document.getElementById('submissionFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('fileNameDisplay').innerText = file.name;
+            }
+        });
+
+        // Load assignments from API
+        async function loadAssignments() {
+            const res = await API.get('/assignments');
+            if (res.success) {
+                allAssignments = res.data;
+                renderAssignments();
+            } else {
+                document.getElementById('assignmentsList').innerHTML = `
+                    <p class="text-error text-sm text-center py-12">${res.message}</p>
+                `;
+            }
+        }
+
+        // Render assignments lists according to selected category tab
+        function renderAssignments() {
+            const container = document.getElementById('assignmentsList');
+            const now = new Date();
+            
+            // Filter devoirs
+            let list = [];
+            if (activeTab === 'pending') {
+                // Devoirs non encore rendus
+                list = allAssignments.filter(a => !a.submission_id);
+            } else {
+                // Devoirs rendus
+                list = allAssignments.filter(a => !!a.submission_id);
+            }
+
+            if (list.length === 0) {
+                container.innerHTML = `
+                    <p class="text-neutralMuted text-sm text-center py-12">Aucun devoir à afficher dans cette catégorie.</p>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+            list.forEach(a => {
+                const isOverdue = new Date(a.date_limite) < now;
+                
+                if (activeTab === 'pending') {
+                    // Onglet "Devoirs à rendre"
+                    container.innerHTML += `
+                        <div class="bg-white rounded-xl border border-neutralBorder p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2 py-0.5 bg-blue-50 text-primary text-[10px] font-bold uppercase rounded-full">
+                                        ${Utils.escapeHTML(a.matiere)}
+                                    </span>
+                                    ${a.fichier_url ? `
+                                        <a href="${window.location.origin}/${a.fichier_url}" target="_blank" class="text-xs text-primary hover:underline flex items-center gap-0.5">
+                                            <i data-lucide="paperclip" class="w-3 h-3"></i> Sujet PDF
+                                        </a>
+                                    ` : ''}
+                                </div>
+                                <h3 class="font-bold text-base text-neutralText">${Utils.escapeHTML(a.titre)}</h3>
+                                <p class="text-xs text-neutralMuted">${Utils.escapeHTML(a.description)}</p>
+                                <div class="flex items-center gap-4 mt-2 text-xs text-neutralMuted">
+                                    <span>Par : M. ${Utils.escapeHTML(a.enseignant_nom)}</span>
+                                    <span>Date limite : <strong class="${isOverdue ? 'text-error' : 'text-neutralText'}">${Utils.formatDate(a.date_limite)}</strong></span>
+                                </div>
+                            </div>
+                            
+                            <div class="w-full md:w-auto self-stretch md:self-auto flex items-center justify-end">
+                                ${isOverdue ? `
+                                    <span class="text-error font-semibold text-xs py-2">Date de rendu dépassée</span>
+                                ` : `
+                                    <button onclick="openSubmitModal(${a.id}, '${escapeQuote(a.titre)}', '${escapeQuote(a.matiere)}')" class="px-4 py-2 bg-primary hover:bg-primary-light text-white text-xs font-semibold rounded-lg transition-all flex items-center gap-1">
+                                        <i data-lucide="upload" class="w-3.5 h-3.5"></i> Rendre mon travail
+                                    </button>
+                                `}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Onglet "Rendus et notes"
+                    const hasNote = a.note !== null;
+                    
+                    container.innerHTML += `
+                        <div class="bg-white rounded-xl border border-neutralBorder p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2 py-0.5 bg-green-50 text-success text-[10px] font-bold uppercase rounded-full">
+                                        ${Utils.escapeHTML(a.matiere)}
+                                    </span>
+                                    <span class="text-[10px] text-neutralMuted">
+                                        Rendu le ${Utils.formatDate(a.submitted_at)}
+                                    </span>
+                                </div>
+                                <h3 class="font-bold text-base text-neutralText">${Utils.escapeHTML(a.titre)}</h3>
+                                <p class="text-xs text-neutralMuted">Copie : 
+                                    <a href="${window.location.origin}/${a.submission_fichier}" target="_blank" class="text-primary hover:underline font-semibold inline-flex items-center gap-0.5">
+                                        Voir ma copie PDF <i data-lucide="external-link" class="w-3 h-3"></i>
+                                    </a>
+                                </p>
+                                ${hasNote ? `
+                                    <div class="mt-3 p-3 bg-neutralBg rounded-lg border border-neutralBorder">
+                                        <p class="text-xs font-medium text-neutralText">Commentaire du professeur :</p>
+                                        <p class="text-xs text-neutralMuted mt-0.5">${Utils.escapeHTML(a.commentaire || 'Aucune observation.')}</p>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="w-full md:w-auto self-stretch md:self-auto flex flex-col items-end justify-center">
+                                ${hasNote ? `
+                                    <span class="text-lg font-bold text-secondary">${parseFloat(a.note).toFixed(2)}/20</span>
+                                    <span class="text-[10px] text-neutralMuted">Correction enregistrée</span>
+                                ` : `
+                                    <span class="px-2.5 py-1 bg-neutralBg text-neutralMuted font-semibold rounded-lg text-xs">Copie en cours de correction</span>
+                                `}
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            lucide.createIcons();
+        }
+
+        // Helper escape quote for HTML click arguments
+        function escapeQuote(str) {
+            return str.replace(/'/g, "\\'");
+        }
+
+        // Switch category tabs
+        function switchTab(tab) {
+            activeTab = tab;
+            const tabPending = document.getElementById('tabPending');
+            const tabSubmitted = document.getElementById('tabSubmitted');
+
+            if (tab === 'pending') {
+                tabPending.className = "pb-3 border-b-2 border-primary font-bold text-primary";
+                tabSubmitted.className = "pb-3 border-b-2 border-transparent font-medium text-neutralMuted hover:text-neutralText";
+            } else {
+                tabSubmitted.className = "pb-3 border-b-2 border-primary font-bold text-primary";
+                tabPending.className = "pb-3 border-b-2 border-transparent font-medium text-neutralMuted hover:text-neutralText";
+            }
+            renderAssignments();
+        }
+
+        // Open submission modal
+        function openSubmitModal(id, titre, matiere) {
+            document.getElementById('modalAssignmentId').value = id;
+            document.getElementById('modalAssignmentTitle').innerText = titre;
+            document.getElementById('modalAssignmentMatiere').innerText = `Matière : ${matiere}`;
+            document.getElementById('fileNameDisplay').innerText = "Cliquez pour choisir un PDF";
+            document.getElementById('submissionFile').value = '';
+            document.getElementById('submitModal').classList.remove('hidden');
+        }
+
+        // Close submission modal
+        function closeSubmitModal() {
+            document.getElementById('submitModal').classList.add('hidden');
+        }
+
+        // Handle submission form submit
+        document.getElementById('submitForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('modalAssignmentId').value;
+            const fileInput = document.getElementById('submissionFile');
+            const submitBtn = document.getElementById('modalSubmitBtn');
+
+            if (fileInput.files.length === 0) {
+                Utils.showToast("Veuillez choisir un fichier.", "error");
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Téléversement en cours...";
+
+            // Préparer le FormData
+            const formData = new FormData();
+            formData.append('fichier', fileInput.files[0]);
+
+            const res = await API.postData(`/assignments/${id}/submit`, formData);
+
+            if (res.success) {
+                Utils.showToast("Copie soumise avec succès !", "success");
+                closeSubmitModal();
+                loadAssignments(); // Recharger
+            } else {
+                Utils.showToast(res.message, "error");
+            }
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Soumettre la copie";
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messagerie — EduNet BJ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/style.css">
+    <script src="../../assets/js/lucide.min.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/auth.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+    <style>
+        .chat-bubble { max-width: 75%; }
+        .chat-bubble.mine { background: hsl(221, 83%, 53%); color: white; border-radius: 18px 18px 4px 18px; }
+        .chat-bubble.other { background: white; border: 1px solid #e5e7eb; border-radius: 18px 18px 18px 4px; }
+        #messages-list { scroll-behavior: smooth; }
+        #messageInput { resize: none; }
+    </style>
+</head>
+<body class="bg-neutralBg font-sans text-neutralText antialiased flex min-h-screen">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-primary-dark text-white flex flex-col justify-between hidden md:flex shrink-0">
+        <div>
+            <!-- Logo -->
+            <div class="h-16 flex items-center px-6 border-b border-white/10">
+                <span class="text-xl font-bold text-white">EduNet<span class="text-secondary">BJ</span></span>
+            </div>
+            
+            <!-- User Summary -->
+            <div class="px-6 py-6 border-b border-white/10 flex items-center gap-3">
+                <div id="userAvatarContainer" class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold text-white uppercase text-sm">
+                    <!-- Initials dynamically loaded -->
+                </div>
+                <div>
+                    <h4 id="userName" class="font-semibold text-sm truncate">Chargement...</h4>
+                    <span id="userClass" class="text-xs text-white/60">Élève</span>
+                </div>
+            </div>
+
+            <!-- Nav Items -->
+            <nav class="p-4 space-y-1">
+                <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+                </a>
+                <a href="courses.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="book-open" class="w-4 h-4"></i> Cours
+                </a>
+                <a href="assignments.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="clipboard-list" class="w-4 h-4"></i> Devoirs
+                </a>
+                <a href="announcements.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="megaphone" class="w-4 h-4"></i> Annonces
+                </a>
+                <a href="messaging.html" class="flex items-center gap-3 px-4 py-3 bg-secondary text-white rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="message-square" class="w-4 h-4"></i> Messagerie
+                </a>
+                <a href="schedule.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="calendar" class="w-4 h-4"></i> Emploi du temps
+                </a>
+                <a href="grades.html" class="flex items-center gap-3 px-4 py-3 text-white/60 hover:text-white hover:bg-white/5 rounded-lg text-sm font-semibold transition-all duration-200">
+                    <i data-lucide="award" class="w-4 h-4"></i> Mes notes
+                </a>
+            </nav>
+        </div>
+
+        <!-- Logout -->
+        <div class="p-4 border-t border-white/10">
+            <button onclick="Auth.logout()" class="flex items-center gap-3 w-full px-4 py-3 text-white/60 hover:text-error hover:bg-red-500/10 rounded-lg text-sm font-semibold transition-all duration-200">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Se déconnecter
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <!-- Top Navigation -->
+        <header class="h-16 bg-white border-b border-neutralBorder flex items-center justify-between px-6 shrink-0">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-bold">Messagerie de classe</h1>
+            </div>
+            <div>
+                <span id="userBadge" class="px-2.5 py-1 bg-blue-50 text-primary rounded-full text-xs font-semibold uppercase">Classe</span>
+            </div>
+        </header>
+
+        <!-- Main Body -->
+        <div class="p-6 max-w-4xl w-full mx-auto space-y-6 flex-1 flex flex-col justify-between min-h-[500px]">
+            <!-- Header Info -->
+            <div>
+                <p id="classeLabel" class="text-neutralMuted mt-1 text-sm">Chargement de la classe...</p>
+            </div>
+
+            <!-- Chat Container -->
+            <div class="bg-white rounded-2xl border border-neutralBorder shadow-sm overflow-hidden flex flex-col flex-1" style="height: 550px;">
+                <!-- Messages list -->
+                <div id="messages-list" class="flex-1 overflow-y-auto p-6 space-y-4">
+                    <div class="text-center text-neutralMuted py-12">
+                        <i data-lucide="message-circle" class="w-12 h-12 mx-auto mb-3 opacity-30"></i>
+                        <p class="text-sm">Chargement des messages...</p>
+                    </div>
+                </div>
+
+                <!-- Input area -->
+                <div class="border-t border-neutralBorder p-4 bg-neutralBg">
+                    <form id="messageForm" class="flex gap-3 items-end">
+                        <textarea id="messageInput" rows="1"
+                            class="flex-1 rounded-xl border border-neutralBorder px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+                            placeholder="Écrivez un message à votre classe..."></textarea>
+                        <button type="submit" id="sendBtn"
+                            class="btn-primary flex items-center gap-2 px-4 py-3 shrink-0">
+                            <i data-lucide="send" class="w-4 h-4"></i>
+                            <span class="hidden sm:inline">Envoyer</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Vérifier l'authentification
+        const user = Auth.checkSession(['eleve']);
+
+        if (user) {
+            document.getElementById('userName').innerText = `${user.prenom} ${user.nom}`;
+            document.getElementById('userClass').innerText = `Élève · ${user.classe.toUpperCase()}`;
+            document.getElementById('userBadge').innerText = user.classe;
+            document.getElementById('classeLabel').textContent = `Fil de discussion de la classe : ${user.classe.toUpperCase()}`;
+
+            const initials = (user.prenom[0] + user.nom[0]).toUpperCase();
+            document.getElementById('userAvatarContainer').innerText = initials;
+
+            // Charger les messages et auto-refresh
+            loadMessages();
+            setInterval(loadMessages, 10000);
+        }
+
+        const list = document.getElementById('messages-list');
+        let lastMessageCount = 0;
+
+        function renderMessages(messages) {
+            if (messages.length === 0) {
+                list.innerHTML = `<div class="text-center text-neutralMuted py-12">
+                    <i data-lucide="message-circle" class="w-12 h-12 mx-auto mb-3 opacity-30"></i>
+                    <p class="text-sm">Aucun message pour le moment. Soyez le premier à écrire !</p>
+                </div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            list.innerHTML = messages.map(msg => {
+                const isMe = msg.expediteur_id == user?.id;
+                const time = new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                const date = new Date(msg.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+                
+                return `<div class="flex ${isMe ? 'justify-end' : 'justify-start'} gap-2">
+                    ${!isMe ? `<div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold shrink-0 mt-1">
+                        ${(msg.prenom || '?')[0]}${(msg.nom || '?')[0]}
+                    </div>` : ''}
+                    <div class="chat-bubble ${isMe ? 'mine' : 'other'} px-4 py-2 shadow-sm">
+                        ${!isMe ? `<p class="text-xs font-semibold ${isMe ? 'text-blue-100' : 'text-primary'} mb-1">${msg.prenom} ${msg.nom} <span class="font-normal text-neutralMuted">(${msg.role})</span></p>` : ''}
+                        <p class="text-sm">${Utils.escapeHtml(msg.contenu)}</p>
+                        <p class="text-xs mt-1 ${isMe ? 'text-blue-200' : 'text-neutralMuted'} text-right">${date} à ${time}</p>
+                    </div>
+                    ${isMe ? `<div class="w-8 h-8 rounded-full bg-secondary text-white flex items-center justify-center text-xs font-bold shrink-0 mt-1">
+                        ${(user.prenom || '?')[0]}${(user.nom || '?')[0]}
+                    </div>` : ''}
+                </div>`;
+            }).join('');
+
+            // Scroll to bottom if new messages
+            if (messages.length !== lastMessageCount) {
+                list.scrollTop = list.scrollHeight;
+                lastMessageCount = messages.length;
+            }
+        }
+
+        async function loadMessages() {
+            const res = await API.get('/messages');
+            if (res.success) {
+                renderMessages(res.data || []);
+            }
+        }
+
+        // Send message
+        document.getElementById('messageForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const contenu = document.getElementById('messageInput').value.trim();
+            if (!contenu) return;
+
+            const btn = document.getElementById('sendBtn');
+            btn.disabled = true;
+
+            const res = await API.postData('/messages', { classe: user?.classe, contenu });
+            if (res.success) {
+                document.getElementById('messageInput').value = '';
+                document.getElementById('messageInput').style.height = 'auto';
+                await loadMessages();
+            } else {
+                Utils.showToast(res.message || 'Erreur lors de l\'envoi', 'error');
+            }
+            btn.disabled = false;
+        });
+
+        // Auto-resize textarea
+        document.getElementById('messageInput').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+
+        // Send with Ctrl+Enter
+        document.getElementById('messageInput').addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                document.getElementById('messageForm').dispatchEvent(new Event('submit'));
+            }
+        });
+
+        lucide.createIcons();
+    </script>
+</body>
+</html>
