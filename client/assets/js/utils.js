@@ -119,3 +119,117 @@ Utils.formatRelativeDate = (dateString) => {
     if (diffDays < 7) return `Il y a ${diffDays}j`;
     return Utils.formatDate(dateString, false);
 };
+
+// Initialisation automatique de la responsivité mobile sur tous les écrans
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Injection des styles CSS nécessaires au tiroir de navigation mobile
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @media (max-w: 767px) {
+        aside.mobile-drawer {
+          position: fixed !important;
+          top: 0 !important;
+          bottom: 0 !important;
+          left: 0 !important;
+          z-index: 9999 !important;
+          transform: translateX(-100%) !important;
+          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+          display: flex !important;
+        }
+        aside.mobile-drawer.open {
+          transform: translateX(0) !important;
+          box-shadow: 10px 0 30px rgba(15, 28, 63, 0.25) !important;
+        }
+        .mobile-backdrop {
+          position: fixed !important;
+          inset: 0 !important;
+          background-color: rgba(15, 28, 63, 0.4) !important;
+          backdrop-filter: blur(4px) !important;
+          -webkit-backdrop-filter: blur(4px) !important;
+          z-index: 9998 !important;
+          opacity: 0;
+          transition: opacity 0.3s ease-in-out !important;
+          pointer-events: none;
+        }
+        .mobile-backdrop.active {
+          opacity: 1;
+          pointer-events: auto;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // 2. Vérification et injection dynamique du bouton hamburger si manquant
+    const header = document.querySelector('main > header');
+    if (header) {
+        let mobileMenuBtn = header.querySelector('#mobileMenuBtn');
+        if (!mobileMenuBtn) {
+            const container = header.querySelector('.flex.items-center.gap-4') || header.firstElementChild;
+            if (container) {
+                mobileMenuBtn = document.createElement('button');
+                mobileMenuBtn.id = 'mobileMenuBtn';
+                mobileMenuBtn.className = 'md:hidden text-neutralMuted hover:text-neutralText mr-2 shrink-0 p-1.5 rounded-lg hover:bg-neutralBg transition-colors';
+                mobileMenuBtn.innerHTML = '<i data-lucide="menu" class="w-6 h-6"></i>';
+                container.insertBefore(mobileMenuBtn, container.firstChild);
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
+            }
+        }
+    }
+
+    // 3. Configuration du tiroir mobile et de l'overlay
+    const aside = document.querySelector('aside');
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+
+    if (aside && mobileMenuBtn) {
+        aside.classList.add('mobile-drawer');
+
+        // Créer l'overlay
+        const backdrop = document.createElement('div');
+        backdrop.className = 'mobile-backdrop';
+        document.body.appendChild(backdrop);
+
+        const openMenu = () => {
+            aside.classList.add('open');
+            backdrop.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        };
+
+        const closeMenu = () => {
+            aside.classList.remove('open');
+            backdrop.classList.remove('active');
+            document.body.style.overflow = '';
+        };
+
+        // Cloner le bouton pour supprimer d'éventuels listeners statiques (ex: l'ancien toast de démo)
+        const activeBtn = mobileMenuBtn.cloneNode(true);
+        mobileMenuBtn.parentNode.replaceChild(activeBtn, mobileMenuBtn);
+
+        activeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (aside.classList.contains('open')) {
+                closeMenu();
+            } else {
+                openMenu();
+            }
+        });
+
+        backdrop.addEventListener('click', closeMenu);
+
+        // Fermer le menu au clic sur n'importe quel lien interne
+        aside.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('click', closeMenu);
+        });
+    }
+
+    // 4. Correction de la responsivité des tableaux (éviter les débordements horizontaux)
+    document.querySelectorAll('table').forEach(table => {
+        if (!table.parentElement.classList.contains('overflow-x-auto')) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'overflow-x-auto w-full';
+            table.parentNode.insertBefore(wrapper, table);
+            wrapper.appendChild(table);
+        }
+    });
+});
