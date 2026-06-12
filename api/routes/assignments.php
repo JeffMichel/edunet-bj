@@ -117,7 +117,7 @@ if (preg_match('/^\/(\d+)\/submissions$/', $sub_uri, $matches)) {
     }
 
     $stmt = $db->prepare("
-        SELECT s.*, u.nom, u.prenom, u.email
+        SELECT s.*, u.nom, u.prenom, u.matricule
         FROM assignment_submissions s
         JOIN users u ON s.eleve_id = u.id
         WHERE s.assignment_id = ?

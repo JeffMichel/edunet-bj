@@ -48,7 +48,7 @@ function require_auth() {
     }
 
     $db = Database::getConnection();
-    $stmt = $db->prepare("SELECT id, nom, prenom, email, role, classe, matiere, statut, avatar FROM users WHERE id = ?");
+    $stmt = $db->prepare("SELECT id, nom, prenom, matricule, role, classe, matiere, statut, avatar FROM users WHERE id = ?");
     $stmt->execute([$payload['id']]);
     $user = $stmt->fetch();
 

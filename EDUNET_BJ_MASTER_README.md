@@ -1,6 +1,13 @@
 # EduNet BJ — README Principal pour Agent IA (Antigravity)
 
 > **Instructions pour l'agent** : Tu vas construire de zéro une application web complète appelée **EduNet BJ** en **PHP pur uniquement**. Lis ce document **entièrement** avant de générer le moindre fichier. Respecte scrupuleusement la stack, l'architecture, la charte graphique et toutes les fonctionnalités décrites ci-dessous. Ne génère aucune fonctionnalité non listée. Le projet comporte deux parties : un **back-end PHP pur (API REST)** et un **front-end HTML/CSS/JS** qui consomme cette API.
+>
+> **Modifications critiques à respecter absolument** :
+> - ❌ Aucune page d'inscription publique — tous les comptes sont créés uniquement par l'administrateur
+> - ✅ Authentification par **numéro matricule** (pas d'email)
+> - ✅ Matricule généré automatiquement par le système au format `BJ-AAAA-XXXX`
+> - ✅ Mot de passe par défaut `000000` à la création de tout compte
+> - ✅ Changement de mot de passe obligatoire à la **première connexion** pour tous les rôles sauf admin
 
 ---
 
@@ -136,15 +143,16 @@ USE edunet_bj;
 
 CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
+  matricule VARCHAR(20) UNIQUE NOT NULL,          -- Format BJ-AAAA-XXXX, généré auto
   nom VARCHAR(100) NOT NULL,
   prenom VARCHAR(100) NOT NULL,
-  email VARCHAR(150) UNIQUE NOT NULL,
-  password VARCHAR(255) NOT NULL,
+  password VARCHAR(255) NOT NULL,                 -- Bcrypt de '000000' par défaut
   role ENUM('eleve', 'enseignant', 'censeur', 'admin') NOT NULL,
   classe VARCHAR(50) NULL,
   matiere VARCHAR(100) NULL,
   avatar VARCHAR(255) NULL,
-  statut ENUM('en_attente', 'actif', 'suspendu') DEFAULT 'en_attente',
+  statut ENUM('actif', 'suspendu') DEFAULT 'actif',
+  premier_connexion TINYINT(1) DEFAULT 1,         -- 1 = doit changer son mdp
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -252,9 +260,9 @@ CREATE TABLE reports (
   FOREIGN KEY (cible_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Compte admin par défaut (mot de passe: Admin@2026)
-INSERT INTO users (nom, prenom, email, password, role, statut)
-VALUES ('Admin', 'EduNet', 'admin@edunetbj.bj', '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', 'actif');
+-- Compte admin par défaut (matricule: BJ-2026-0001 / mot de passe: EduNet@BJ_Adm1n!2026#S3cur3 — premier_connexion=0 car admin ne change pas)
+INSERT INTO users (matricule, nom, prenom, password, role, statut, premier_connexion)
+VALUES ('BJ-2026-0001', 'Admin', 'EduNet', '$2y$10$mZEzkZlRzXBb8GAC9ymAcOZucAUeuYUdnZLCvGcoTJcpE6.xjG4Dm', 'admin', 'actif', 0);
 ```
 
 ---
@@ -375,10 +383,12 @@ RewriteRule ^(.*)$ index.php [QSA,L]
 ### Auth (`/api/auth`)
 | Méthode | Route | Description | Accès |
 |---|---|---|---|
-| POST | `/auth/register` | Inscription élève (statut `en_attente`) | Public |
-| POST | `/auth/login` | Connexion — retourne JWT + refresh token | Public |
+| POST | `/auth/login` | Connexion avec matricule + mot de passe — retourne JWT + refresh token + flag `premier_connexion` | Public |
+| POST | `/auth/change-password` | Changer le mot de passe (obligatoire si `premier_connexion=1`) | Authentifié |
 | POST | `/auth/refresh` | Renouveler l'access token | Public |
 | POST | `/auth/logout` | Invalider le refresh token | Authentifié |
+
+> **Règle `premier_connexion`** : Si la réponse du login contient `"premier_connexion": true`, le front-end doit **immédiatement rediriger** vers la page de changement de mot de passe. Toute autre navigation est bloquée jusqu'à ce que le mot de passe soit changé. Une fois changé, `premier_connexion` passe à `0` en base et l'utilisateur est redirigé vers son dashboard.
 
 ### Utilisateurs (`/api/users`)
 | Méthode | Route | Description | Accès |
@@ -444,11 +454,14 @@ RewriteRule ^(.*)$ index.php [QSA,L]
 ### Administration (`/api/admin`)
 | Méthode | Route | Description | Accès |
 |---|---|---|---|
-| GET | `/admin/users` | Liste tous les utilisateurs | Admin |
-| POST | `/admin/users` | Créer un compte enseignant | Admin |
+| GET | `/admin/users` | Liste tous les utilisateurs avec leur matricule | Admin |
+| POST | `/admin/users` | Créer un compte (élève, enseignant ou censeur) — génère automatiquement le matricule `BJ-AAAA-XXXX` et définit le mot de passe par défaut `000000` | Admin |
 | PUT | `/admin/users/:id/status` | Activer / suspendre un compte | Admin |
-| DELETE | `/admin/users/:id` | Supprimer un compte | Admin |
+| PUT | `/admin/users/:id/reset-password` | Réinitialiser le mot de passe à `000000` et repasser `premier_connexion=1` | Admin |
+| DELETE | `/admin/users/:id` | Supprimer un compte (le matricule ne peut jamais être réattribué) | Admin |
 | GET | `/admin/stats` | Statistiques globales | Admin |
+
+> **Règle matricule** : Le système génère le matricule en combinant `BJ` + année courante + numéro séquentiel sur 4 chiffres (ex: `BJ-2026-0042`). Ce numéro est unique, stocké en `UNIQUE` en base, et **jamais réutilisé** même après suppression du compte (gérer via une table `matricules_archives` ou compteur auto-incrémenté distinct).
 
 ---
 
@@ -476,7 +489,60 @@ Codes HTTP à respecter : `200`, `201`, `400`, `401`, `403`, `404`, `500`.
 
 ---
 
-## 11. Règles back-end importantes
+## 11. Logique matricule et première connexion
+
+### Génération du matricule (`BJ-AAAA-XXXX`)
+
+Ajouter une table `matricule_counter` pour garantir l'unicité même après suppression :
+
+```sql
+CREATE TABLE matricule_counter (
+  annee YEAR NOT NULL PRIMARY KEY,
+  dernier_numero INT DEFAULT 0
+);
+```
+
+Lors de la création d'un compte via `POST /admin/users`, le back-end PHP doit :
+1. Lire l'année courante (`date('Y')`)
+2. Faire un `INSERT ... ON DUPLICATE KEY UPDATE dernier_numero = dernier_numero + 1` dans `matricule_counter`
+3. Récupérer le nouveau `dernier_numero`
+4. Composer le matricule : `sprintf('BJ-%d-%04d', $annee, $numero)` → ex: `BJ-2026-0042`
+5. Stocker ce matricule dans `users.matricule`
+6. Le matricule est **permanent et immuable** — même après suppression du compte, le compteur ne recule jamais
+
+### Mot de passe par défaut
+
+À la création de tout compte (élève, enseignant, censeur) :
+```php
+$password_defaut = password_hash('000000', PASSWORD_BCRYPT);
+// premier_connexion = 1
+```
+La réponse de l'API doit retourner clairement le matricule et indiquer que le mot de passe par défaut est `000000`.
+
+### Flux première connexion
+
+```
+Login (matricule + 000000)
+        ↓
+API retourne JWT avec { premier_connexion: true }
+        ↓
+Front-end détecte le flag → redirige vers /pages/change-password.html
+        ↓
+Utilisateur saisit nouveau mot de passe (min 6 caractères, différent de 000000)
+        ↓
+POST /auth/change-password → met à jour password + premier_connexion = 0
+        ↓
+Redirige vers le dashboard selon le rôle
+```
+
+**Règles de validation du nouveau mot de passe :**
+- Minimum 6 caractères
+- Ne peut pas être `000000`
+- Confirmation identique au nouveau mot de passe
+
+---
+
+## 12. Règles back-end importantes
 
 1. Toutes les réponses sont en JSON avec `Content-Type: application/json`
 2. Vérifier le JWT sur toutes les routes protégées via `api/helpers/auth.php`
@@ -490,7 +556,7 @@ Codes HTTP à respecter : `200`, `201`, `400`, `401`, `403`, `404`, `500`.
 
 ---
 
-## 12. Charte graphique — À respecter sur toutes les pages
+## 13. Charte graphique — À respecter sur toutes les pages
 
 ### Couleurs
 
@@ -563,14 +629,14 @@ item actif   : background #E8621A; color white; border-radius 8px;
 
 ---
 
-## 13. Pages front-end à construire
+## 14. Pages front-end à construire
 
 Chaque page vérifie le rôle JWT avant d'afficher le contenu. Si non authentifié ou mauvais rôle → rediriger vers `/pages/login.html`.
 
 ### Pages publiques
-- `index.html` — Landing page avec présentation du projet et bouton "Se connecter"
-- `pages/login.html` — Formulaire de connexion
-- `pages/register.html` — Formulaire d'inscription élève
+- `client/index.html` — Landing page minimaliste : nom du projet **EduNet BJ**, slogan, et un seul bouton central **"Se connecter"** qui redirige vers `login.html`. **Aucune carte "espace élève / enseignant / censeur / admin"**, aucun lien direct vers les espaces, aucune description des fonctionnalités par rôle.
+- `client/pages/login.html` — Formulaire de connexion avec **matricule** + mot de passe (pas d'email, pas de lien "s'inscrire")
+- `client/pages/change-password.html` — Page de changement de mot de passe obligatoire à la première connexion (accessible uniquement si `premier_connexion=true` dans le JWT)
 
 ### Espace Élève
 - `pages/eleve/dashboard.html` — Résumé : dernières annonces, devoirs à rendre, cours récents
@@ -590,7 +656,7 @@ Chaque page vérifie le rôle JWT avant d'afficher le contenu. Si non authentifi
 
 ### Espace Admin
 - `pages/admin/dashboard.html` — Stats globales avec Chart.js (utilisateurs, cours, devoirs)
-- `pages/admin/users.html` — Gérer tous les comptes, valider inscriptions élèves, créer enseignants
+- `pages/admin/users.html` — Gérer tous les comptes : créer élève/enseignant/censeur (matricule généré automatiquement affiché à la création), suspendre, réinitialiser mot de passe
 - `pages/admin/settings.html` — Configuration classes, matières, années scolaires
 
 ### Règles front-end
@@ -599,10 +665,12 @@ Chaque page vérifie le rôle JWT avant d'afficher le contenu. Si non authentifi
 3. Le token JWT est stocké dans `localStorage` côté client
 4. Protection XSS : échapper toutes les données affichées dynamiquement
 5. Graphiques dans les dashboards : utiliser **Chart.js**
+6. **Guard `premier_connexion`** : dans `auth.js`, après chaque login et après chaque chargement de page protégée, si le JWT décodé contient `premier_connexion: true`, rediriger immédiatement vers `change-password.html` sans exception
+7. La page `login.html` ne contient **aucun lien vers une inscription** — seul champ de connexion : matricule + mot de passe
 
 ---
 
-## 14. Ordre de génération recommandé
+## 15. Ordre de génération recommandé
 
 Génère les fichiers dans cet ordre pour éviter les dépendances manquantes :
 
@@ -611,7 +679,7 @@ Génère les fichiers dans cet ordre pour éviter les dépendances manquantes :
 2. `api/helpers/jwt.php` + `api/helpers/response.php` + `api/helpers/auth.php` + `api/helpers/upload.php`
 3. `database/schema.sql`
 4. `api/index.php`
-5. `api/routes/auth.php`
+5. `api/routes/auth.php` (login + change-password + refresh + logout — pas de register)
 6. `api/routes/users.php`
 7. `api/routes/courses.php`
 8. `api/routes/assignments.php`
@@ -620,23 +688,24 @@ Génère les fichiers dans cet ordre pour éviter les dépendances manquantes :
 11. `api/routes/schedule.php`
 12. `api/routes/grades.php`
 13. `api/routes/reports.php`
-14. `api/routes/admin.php`
+14. `api/routes/admin.php` (création comptes + génération matricule + reset password)
 15. `api/.htaccess`
 
 **Front-end**
 16. `client/assets/css/style.css` (variables CSS + Tailwind base)
 17. `client/assets/js/api.js` (wrapper Fetch API réutilisable)
-18. `client/assets/js/auth.js` + `client/assets/js/utils.js`
-19. `client/pages/login.html` + `client/pages/register.html`
-20. `client/index.html` (landing page)
-21. Pages espace élève (dashboard → courses → assignments → announcements)
-22. Pages espace enseignant (dashboard → courses → assignments → announcements)
-23. Pages espace censeur (dashboard → reports)
-24. Pages espace admin (dashboard → users → settings)
+18. `client/assets/js/auth.js` (avec guard `premier_connexion`) + `client/assets/js/utils.js`
+19. `client/pages/login.html` (matricule + mot de passe, sans lien inscription)
+20. `client/pages/change-password.html` (changement obligatoire à la 1ère connexion)
+21. `client/index.html` (landing page)
+22. Pages espace élève (dashboard → courses → assignments → announcements)
+23. Pages espace enseignant (dashboard → courses → assignments → announcements)
+24. Pages espace censeur (dashboard → reports)
+25. Pages espace admin (dashboard → users → settings)
 
 ---
 
-## 15. Test rapide après génération
+## 16. Test rapide après génération
 
 ```bash
 # 1. Créer la base de données
@@ -645,10 +714,22 @@ mysql -u root -p < database/schema.sql
 # 2. Lancer le serveur PHP intégré
 cd api && php -S localhost:8000
 
-# 3. Tester le login admin
+# 3. Tester le login admin (matricule BJ-2026-0001)
 curl -X POST http://localhost:8000/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@edunetbj.bj","password":"Admin@2026"}'
+  -d '{"matricule":"BJ-2026-0001","password":"EduNet@BJ_Adm1n!2026#S3cur3"}'
+
+# 4. Créer un compte élève via l'admin (doit retourner le matricule généré)
+curl -X POST http://localhost:8000/admin/users \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <token_admin>" \
+  -d '{"nom":"Agossou","prenom":"Kossi","role":"eleve","classe":"3eme A"}'
+# Réponse attendue: { "matricule": "BJ-2026-0002", "mot_de_passe_defaut": "000000" }
+
+# 5. Tester le login du nouvel élève (doit retourner premier_connexion: true)
+curl -X POST http://localhost:8000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"matricule":"BJ-2026-0002","password":"000000"}'
 ```
 
 ---

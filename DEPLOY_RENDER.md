@@ -1,93 +1,134 @@
 # Guide de Déploiement sur Render — EduNet BJ
 
-Ce guide explique comment mettre en ligne gratuitement l'application **EduNet BJ** sur **Render** en utilisant un conteneur Docker unifié (qui héberge à la fois le Front-end et le Back-end PHP sur le même nom de domaine, éliminant les problèmes de CORS).
+Ce guide explique comment mettre en ligne **EduNet BJ** sur **Render** en utilisant Docker (héberge le Front-end et le Back-end PHP sur le même domaine, sans problèmes CORS).
 
 ---
 
 ## Prérequis
-1. Un compte [GitHub](https://github.com/) ou GitLab.
-2. Un compte [Render](https://render.com/).
-3. Une base de données MySQL hébergée gratuitement en ligne (voir Étape 1).
+
+1. Un compte [GitHub](https://github.com/) — ✅ repo `JeffMichel/edunet-bj` déjà créé
+2. Un compte [Render](https://render.com/)
+3. Base de données Aiven MySQL — ✅ **déjà configurée et opérationnelle**
 
 ---
 
-## Étape 1 : Créer une Base de Données MySQL gratuite en ligne
+## ✅ Base de données Aiven — DÉJÀ CONFIGURÉE
 
-Render ne propose pas de base de données MySQL dans son offre gratuite. Vous devez utiliser un hébergeur tiers gratuit. Deux choix recommandés :
+La base de données MySQL est hébergée sur **Aiven.io** et toutes les tables sont créées.
 
-### Option A : Clever Cloud (Très simple, recommandé)
-1. Créez un compte gratuit sur [Clever Cloud](https://console.clever-cloud.com/).
-2. Cliquez sur **Create...** -> **an add-on** -> Choisissez **MySQL Free (Shared)**.
-3. Nommez-le (ex: `edunet-db`) et choisissez une région proche de vous.
-4. Une fois créé, allez dans les détails de l'add-on pour récupérer vos identifiants :
-   - **Host** (Serveur)
-   - **Database name** (Nom de la base)
-   - **User** (Utilisateur)
-   - **Password** (Mot de passe)
-   - **Port** (généralement `3306`)
+| Paramètre | Valeur |
+|-----------|--------|
+| **Host** | `mysql-21fe4fef-michelnono34-06f0.d.aivencloud.com` |
+| **Port** | `14402` |
+| **Database** | `defaultdb` |
+| **User** | `avnadmin` |
+| **Password** | *(voir `.env` local)* |
 
-### Option B : Aiven.io
-1. Créez un compte gratuit sur [Aiven](https://aiven.io/).
-2. Créez un nouveau service **MySQL** en choisissant le plan gratuit (Hobbyist).
-3. Attendez quelques minutes que le service démarre, puis récupérez l'URI de connexion ou les paramètres individuels.
+**Compte Admin par défaut :**
+- **Matricule** : `BJ-2026-0001`
+- **Mot de passe** : `EduNet@BJ_Adm1n!2026#S3cur3`
 
-Une fois votre base de données en ligne créée, connectez-vous avec un outil comme DBeaver, TablePlus ou via phpMyAdmin local, et exécutez le script SQL d'initialisation :
-👉 `database/schema.sql` (qui va créer toutes les tables nécessaires).
+> ⚠️ Tous les comptes utilisateurs (élèves, enseignants, censeur) sont créés **uniquement par l'administrateur** depuis l'interface Admin. Il n'y a pas d'inscription publique.
 
 ---
 
-## Étape 2 : Envoyer le projet sur GitHub
+## Étape 1 : Envoyer le projet sur GitHub
 
-1. Créez un nouveau dépôt privé ou public sur GitHub nommé `edunet-bj`.
-2. Initialisez Git dans votre projet local et poussez le code :
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial commit for Render"
-   git branch -M main
-   git remote add origin https://github.com/VOTRE_NOM/edunet-bj.git
-   git push -u origin main
-   ```
+Le code est déjà sur GitHub. Pour pousser les mises à jour :
+
+```bash
+git add .
+git commit -m "Mise à jour"
+git push origin main
+```
 
 ---
 
-## Étape 3 : Créer le service sur Render
+## Étape 2 : Créer le service sur Render
 
-1. Connectez-vous sur votre tableau de bord **Render**.
-2. Cliquez sur **New +** -> **Web Service**.
-3. Associez votre compte GitHub et sélectionnez votre dépôt `edunet-bj`.
-4. Configurez les paramètres suivants :
+1. Connectez-vous sur [render.com](https://render.com/)
+2. Cliquez sur **New +** → **Web Service**
+3. Connectez votre compte GitHub → sélectionnez `edunet-bj`
+4. Configurez :
    - **Name** : `edunet-bj`
-   - **Region** : Choisissez la même région que celle de votre base de données (ex: `Frankfurt (EU)`).
+   - **Region** : `Frankfurt (EU Central)` *(même région qu'Aiven)*
    - **Branch** : `main`
-   - **Runtime** : **Docker** (Render va automatiquement détecter le fichier `Dockerfile` présent à la racine du projet et s'en servir pour compiler l'image).
-   - **Instance Type** : **Free** (0$/mois).
+   - **Runtime** : **Docker** *(détecté automatiquement via le `Dockerfile`)*
+   - **Instance Type** : **Free**
 
 ---
 
-## Étape 4 : Configurer les Variables d'Environnement sur Render
+## Étape 3 : Variables d'environnement sur Render
 
-Pendant la création du service ou dans l'onglet **Environment** de votre Web Service sur Render, ajoutez les variables d'environnement suivantes correspondantes à votre base de données Clever Cloud (ou Aiven) :
+Dans l'onglet **Environment** de votre service Render, ajoutez :
 
 | Clé | Valeur |
-|---|---|
-| `DB_HOST` | *(Hôte de votre base en ligne)* |
-| `DB_PORT` | `3306` |
-| `DB_NAME` | *(Nom de votre base en ligne)* |
-| `DB_USER` | *(Utilisateur de votre base en ligne)* |
-| `DB_PASSWORD` | *(Mot de passe de votre base en ligne)* |
-| `JWT_SECRET` | *(Mettez une clé aléatoire sécurisée et secrète)* |
+|-----|--------|
+| `DB_HOST` | `mysql-21fe4fef-michelnono34-06f0.d.aivencloud.com` |
+| `DB_PORT` | `14402` |
+| `DB_NAME` | `defaultdb` |
+| `DB_USER` | `avnadmin` |
+| `DB_PASSWORD` | `*(votre_mot_de_passe_db_aiven)*` |
+| `JWT_SECRET` | `edunet_bj_secret_key_change_this_in_production` |
+| `JWT_EXPIRES_IN` | `900` |
+| `REFRESH_TOKEN_EXPIRES_IN` | `604800` |
 | `UPLOAD_DIR` | `uploads/` |
 | `MAX_FILE_SIZE` | `5242880` |
+
+> ⚠️ **Important** : Ne pas commit le fichier `.env` sur GitHub (il est dans `.gitignore`). Toujours configurer les variables directement sur Render.
+
+---
+
+## Étape 4 : Déploiement automatique
+
+Render va automatiquement :
+1. Cloner le repo depuis GitHub
+2. Construire l'image Docker (PHP 8.1 + Apache)
+3. Démarrer le conteneur avec les variables d'environnement
+
+Le déploiement prend **3 à 5 minutes**. Render affichera `Your service is live` quand c'est prêt.
 
 ---
 
 ## Étape 5 : Accéder à l'application
 
-Une fois le déploiement terminé (Render affiche `Your service is live`), cliquez sur l'URL générée par Render (ex : `https://edunet-bj.onrender.com`).
+Une fois déployé, l'URL sera : `https://edunet-bj.onrender.com` (ou similaire)
 
-- L'adresse principale affichera la page d'accueil (Front-end).
-- Toutes les requêtes API seront automatiquement acheminées vers `/api` sur la même URL (grâce au résolveur automatique d'URL dynamique inclus dans `api.js`).
-- Connectez-vous avec les identifiants administrateur par défaut :
-  - **Email** : `admin@edunetbj.bj`
-  - **Mot de passe** : `Admin@2026`
+- **Page d'accueil** : `https://edunet-bj.onrender.com`
+- **Connexion** : `https://edunet-bj.onrender.com/pages/login.html`
+- **API** : `https://edunet-bj.onrender.com/api/`
+
+**Connexion Admin :**
+- Matricule : `BJ-2026-0001`
+- Mot de passe : `EduNet@BJ_Adm1n!2026#S3cur3`
+
+---
+
+## Flux de connexion
+
+```
+Connexion (matricule + MDP)
+        ↓
+  premier_connexion = 1 ?
+       ↙         ↘
+     OUI          NON
+      ↓             ↓
+ Page changement  Dashboard
+  de MDP obligatoire selon rôle
+      ↓
+  MDP changé
+      ↓
+ Dashboard selon rôle
+(élève / enseignant / censeur / admin)
+```
+
+---
+
+## Dépannage
+
+| Problème | Solution |
+|----------|----------|
+| `Erreur de connexion à la base de données` | Vérifier les variables d'environnement sur Render |
+| `Impossible de contacter le serveur d'API` | L'API est sur le même domaine `/api`, vérifier le Dockerfile |
+| `Session expirée` | Le token JWT expire après 15 min, le refresh token gère automatiquement |
+| `Service Render en veille` | Le plan gratuit se met en veille après 15 min d'inactivité, le premier chargement peut prendre 30-60 sec |

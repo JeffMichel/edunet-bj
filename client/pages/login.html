@@ -26,16 +26,16 @@
         <!-- Form -->
         <form class="mt-8 space-y-6" id="loginForm">
             <div class="space-y-4">
-                <!-- Email -->
+                <!-- Matricule -->
                 <div>
-                    <label for="email" class="block text-xs font-semibold uppercase tracking-wider text-neutralMuted mb-2">Adresse Email</label>
+                    <label for="matricule" class="block text-xs font-semibold uppercase tracking-wider text-neutralMuted mb-2">Numéro Matricule</label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-neutralMuted">
-                            <i data-lucide="mail" class="w-5 h-5"></i>
+                            <i data-lucide="user" class="w-5 h-5"></i>
                         </div>
-                        <input id="email" name="email" type="email" autocomplete="email" required 
+                        <input id="matricule" name="matricule" type="text" required 
                             class="appearance-none rounded-xl relative block w-full pl-10 pr-3 py-3 border border-neutralBorder placeholder-neutralMuted text-neutralText focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm" 
-                            placeholder="exemple@domaine.com">
+                            placeholder="Ex: BJ-2026-0001">
                     </div>
                 </div>
 
@@ -46,7 +46,7 @@
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-neutralMuted">
                             <i data-lucide="lock" class="w-5 h-5"></i>
                         </div>
-                        <input id="password" name="password" type="password" autocomplete="current-password" required 
+                        <input id="password" name="password" type="password" required 
                             class="appearance-none rounded-xl relative block w-full pl-10 pr-3 py-3 border border-neutralBorder placeholder-neutralMuted text-neutralText focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm" 
                             placeholder="••••••••••••">
                     </div>
@@ -65,13 +65,10 @@
             </div>
         </form>
 
-        <!-- Redirect to register -->
+        <!-- Warning / Assistance info -->
         <div class="text-center mt-4">
-            <p class="text-sm text-neutralMuted">
-                Nouveau élève ? 
-                <a href="register.html" class="font-semibold text-secondary hover:text-secondary-light">
-                    Créer un compte
-                </a>
+            <p class="text-xs text-neutralMuted leading-relaxed">
+                Les inscriptions et réinitialisations de comptes sont gérées uniquement par l'administration de l'établissement.
             </p>
             <div class="mt-4 border-t border-neutralBorder pt-4">
                 <a href="../index.html" class="text-xs text-neutralMuted inline-flex items-center gap-1 hover:text-primary">
@@ -90,11 +87,11 @@
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const email = document.getElementById('email').value.trim();
+            const matricule = document.getElementById('matricule').value.trim();
             const password = document.getElementById('password').value.trim();
             const submitBtn = document.getElementById('submitBtn');
 
-            if (!email || !password) {
+            if (!matricule || !password) {
                 Utils.showToast("Veuillez remplir tous les champs.", "error");
                 return;
             }
@@ -103,16 +100,20 @@
             submitBtn.disabled = true;
             submitBtn.innerHTML = "Connexion en cours...";
 
-            const response = await API.postData('/auth/login', { email, password });
+            const response = await API.postData('/auth/login', { matricule, password });
             
             if (response.success) {
                 Utils.showToast("Connexion réussie !", "success");
                 // Enregistrer les jetons de session
                 API.setSession(response.data.token, response.data.refresh_token, response.data.user);
                 
-                // Rediriger vers l'espace après 1 seconde
+                // Rediriger ou forcer le changement de mot de passe obligatoire
                 setTimeout(() => {
-                    Auth.redirectToDashboard(response.data.user.role);
+                    if (response.data.user.premier_connexion === 1) {
+                        window.location.href = './change-password.html';
+                    } else {
+                        Auth.redirectToDashboard(response.data.user.role);
+                    }
                 }, 1000);
             } else {
                 Utils.showToast(response.message, "error");
@@ -130,7 +131,11 @@
         // Détection de session active
         const activeUser = API.getUser();
         if (activeUser && API.getToken()) {
-            Auth.redirectToDashboard(activeUser.role);
+            if (activeUser.premier_connexion === 1) {
+                window.location.href = './change-password.html';
+            } else {
+                Auth.redirectToDashboard(activeUser.role);
+            }
         }
     </script>
 </body>

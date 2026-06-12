@@ -5,60 +5,32 @@ global $input, $method, $uri;
 $db = Database::getConnection();
 $sub_uri = str_replace('/auth', '', $uri);
 
-if ($method === 'POST' && $sub_uri === '/register') {
-    $nom = trim($input['nom'] ?? '');
-    $prenom = trim($input['prenom'] ?? '');
-    $email = trim($input['email'] ?? '');
-    $password = trim($input['password'] ?? '');
-    $classe = trim($input['classe'] ?? '');
-
-    if (empty($nom) || empty($prenom) || empty($email) || empty($password) || empty($classe)) {
-        json_error("Veuillez remplir tous les champs obligatoires (nom, prenom, email, password, classe).");
-    }
-
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        json_error("Format d'email invalide.");
-    }
-
-    $stmt = $db->prepare("SELECT id FROM users WHERE email = ?");
-    $stmt->execute([$email]);
-    if ($stmt->fetch()) {
-        json_error("Cet email est déjà utilisé.");
-    }
-
-    $hashed_password = password_hash($password, PASSWORD_BCRYPT);
-    $stmt = $db->prepare("INSERT INTO users (nom, prenom, email, password, role, classe, statut) VALUES (?, ?, ?, ?, 'eleve', ?, 'en_attente')");
-    $stmt->execute([$nom, $prenom, $email, $hashed_password, $classe]);
-
-    json_success("Inscription réussie. Votre compte est en attente d'approbation par l'administration.", null, 201);
-}
-
+// Connexion
 if ($method === 'POST' && $sub_uri === '/login') {
-    $email = trim($input['email'] ?? '');
+    $matricule = strtoupper(trim($input['matricule'] ?? ''));
     $password = trim($input['password'] ?? '');
 
-    if (empty($email) || empty($password)) {
-        json_error("Email et mot de passe requis.");
+    if (empty($matricule) || empty($password)) {
+        json_error("Matricule et mot de passe requis.");
     }
 
-    $stmt = $db->prepare("SELECT * FROM users WHERE email = ?");
-    $stmt->execute([$email]);
+    $stmt = $db->prepare("SELECT * FROM users WHERE matricule = ?");
+    $stmt->execute([$matricule]);
     $user = $stmt->fetch();
 
     if (!$user || !password_verify($password, $user['password'])) {
-        json_error("Email ou mot de passe incorrect.", 401);
+        json_error("Matricule ou mot de passe incorrect.", 401);
     }
 
-    if ($user['statut'] === 'en_attente') {
-        json_error("Votre compte est en attente de validation par l'administration.", 403);
-    } elseif ($user['statut'] === 'suspendu') {
+    if ($user['statut'] === 'suspendu') {
         json_error("Votre compte a été suspendu. Veuillez contacter l'administration.", 403);
     }
 
     $payload = [
         'id' => $user['id'],
-        'email' => $user['email'],
-        'role' => $user['role']
+        'matricule' => $user['matricule'],
+        'role' => $user['role'],
+        'premier_connexion' => intval($user['premier_connexion'])
     ];
 
     $jwt = jwt_generate($payload);
@@ -75,15 +47,47 @@ if ($method === 'POST' && $sub_uri === '/login') {
             'id' => $user['id'],
             'nom' => $user['nom'],
             'prenom' => $user['prenom'],
-            'email' => $user['email'],
+            'matricule' => $user['matricule'],
             'role' => $user['role'],
             'classe' => $user['classe'],
             'matiere' => $user['matiere'],
-            'avatar' => $user['avatar']
+            'avatar' => $user['avatar'],
+            'premier_connexion' => intval($user['premier_connexion'])
         ]
     ]);
 }
 
+// Changement obligatoire de mot de passe à la première connexion
+if ($method === 'POST' && $sub_uri === '/change-password') {
+    $user = require_auth();
+    $new_password = trim($input['new_password'] ?? '');
+    $confirm_password = trim($input['confirm_password'] ?? '');
+
+    if (empty($new_password) || empty($confirm_password)) {
+        json_error("Le nouveau mot de passe et sa confirmation sont requis.");
+    }
+
+    if (strlen($new_password) < 6) {
+        json_error("Le nouveau mot de passe doit contenir au moins 6 caractères.");
+    }
+
+    if ($new_password === '000000') {
+        json_error("Le mot de passe ne peut pas être '000000'.");
+    }
+
+    if ($new_password !== $confirm_password) {
+        json_error("La confirmation du mot de passe ne correspond pas.");
+    }
+
+    $hashed_password = password_hash($new_password, PASSWORD_BCRYPT);
+    
+    $stmt = $db->prepare("UPDATE users SET password = ?, premier_connexion = 0 WHERE id = ?");
+    $stmt->execute([$hashed_password, $user['id']]);
+
+    json_success("Votre mot de passe a été modifié avec succès.");
+}
+
+// Rafraîchir l'access token
 if ($method === 'POST' && $sub_uri === '/refresh') {
     $refresh_token = trim($input['refresh_token'] ?? '');
 
@@ -91,7 +95,7 @@ if ($method === 'POST' && $sub_uri === '/refresh') {
         json_error("Refresh token manquant.", 400);
     }
 
-    $stmt = $db->prepare("SELECT r.*, u.nom, u.prenom, u.email, u.role, u.classe, u.matiere, u.statut, u.avatar FROM refresh_tokens r JOIN users u ON r.user_id = u.id WHERE r.token = ? AND r.expires_at > NOW()");
+    $stmt = $db->prepare("SELECT r.*, u.nom, u.prenom, u.matricule, u.role, u.classe, u.matiere, u.statut, u.avatar, u.premier_connexion FROM refresh_tokens r JOIN users u ON r.user_id = u.id WHERE r.token = ? AND r.expires_at > NOW()");
     $stmt->execute([$refresh_token]);
     $session = $stmt->fetch();
 
@@ -105,9 +109,11 @@ if ($method === 'POST' && $sub_uri === '/refresh') {
 
     $payload = [
         'id' => $session['user_id'],
-        'email' => $session['email'],
-        'role' => $session['role']
+        'matricule' => $session['matricule'],
+        'role' => $session['role'],
+        'premier_connexion' => intval($session['premier_connexion'])
     ];
+    
     $new_jwt = jwt_generate($payload);
     $new_refresh_token = bin2hex(random_bytes(40));
     $new_expires_at = date('Y-m-d H:i:s', time() + REFRESH_TOKEN_EXPIRES_IN);
@@ -126,6 +132,7 @@ if ($method === 'POST' && $sub_uri === '/refresh') {
     ]);
 }
 
+// Déconnexion
 if ($method === 'POST' && $sub_uri === '/logout') {
     $user = require_auth();
     $refresh_token = trim($input['refresh_token'] ?? '');

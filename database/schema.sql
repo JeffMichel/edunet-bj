@@ -4,17 +4,23 @@ USE edunet_bj;
 
 CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
+  matricule VARCHAR(20) UNIQUE NOT NULL,
   nom VARCHAR(100) NOT NULL,
   prenom VARCHAR(100) NOT NULL,
-  email VARCHAR(150) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL,
   role ENUM('eleve', 'enseignant', 'censeur', 'admin') NOT NULL,
   classe VARCHAR(50) NULL,
   matiere VARCHAR(100) NULL,
   avatar VARCHAR(255) NULL,
-  statut ENUM('en_attente', 'actif', 'suspendu') DEFAULT 'en_attente',
+  statut ENUM('actif', 'suspendu') DEFAULT 'actif',
+  premier_connexion TINYINT(1) DEFAULT 1,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE matricule_counter (
+  annee YEAR NOT NULL PRIMARY KEY,
+  dernier_numero INT DEFAULT 0
 );
 
 CREATE TABLE refresh_tokens (
@@ -120,6 +126,13 @@ CREATE TABLE reports (
   FOREIGN KEY (cible_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Compte admin par défaut (mot de passe: Admin@2026)
-INSERT INTO users (nom, prenom, email, password, role, statut)
-VALUES ('Admin', 'EduNet', 'admin@edunetbj.bj', '$2y$10$D70PYz5bqd/gFbzb7MMxOO.J.ppmzuxb7PV.eCh7yt/Fcg95vNU5K', 'admin', 'actif');
+-- Compte admin par défaut
+-- Matricule : BJ-2026-0001
+-- Mot de passe : EduNet@BJ_Adm1n!2026#S3cur3
+INSERT INTO users (matricule, nom, prenom, password, role, statut, premier_connexion)
+VALUES ('BJ-2026-0001', 'Admin', 'EduNet', '$2y$10$mZEzkZlRzXBb8GAC9ymAcOZucAUeuYUdnZLCvGcoTJcpE6.xjG4Dm', 'admin', 'actif', 0);
+
+-- Initialiser le compteur de matricules pour l'année 2026 à 1 (puisque l'admin utilise déjà le 0001)
+INSERT INTO matricule_counter (annee, dernier_numero)
+VALUES (2026, 1);
+

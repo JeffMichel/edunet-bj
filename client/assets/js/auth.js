@@ -5,9 +5,22 @@ const Auth = {
     checkSession: (allowedRoles = []) => {
         const token = API.getToken();
         const user = API.getUser();
+        const currentPath = window.location.pathname;
 
         if (!token || !user) {
             Auth.redirectToLogin();
+            return null;
+        }
+
+        // Si c'est la première connexion, forcer la redirection vers la page de changement de mot de passe
+        if (user.premier_connexion === 1 && !currentPath.includes('change-password.html')) {
+            let prefix = './';
+            if (currentPath.includes('/pages/eleve/') || currentPath.includes('/pages/enseignant/') || currentPath.includes('/pages/censeur/') || currentPath.includes('/pages/admin/')) {
+                prefix = '../../';
+            } else if (currentPath.includes('/pages/')) {
+                prefix = '../';
+            }
+            window.location.href = prefix + 'pages/change-password.html';
             return null;
         }
 

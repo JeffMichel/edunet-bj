@@ -55,7 +55,7 @@
                 <h1 class="text-xl font-bold">Comptes Utilisateurs</h1>
             </div>
             <button onclick="openCreateModal()" class="px-4 py-2 bg-primary hover:bg-primary-light text-white font-semibold rounded-lg text-xs flex items-center gap-1.5 shadow transition-all">
-                <i data-lucide="user-plus" class="w-4 h-4"></i> Créer un enseignant
+                <i data-lucide="user-plus" class="w-4 h-4"></i> Créer un compte
             </button>
         </header>
 
@@ -68,7 +68,7 @@
                     <p class="text-xs text-neutralMuted">Recherchez ou filtrez par rôle et statut</p>
                 </div>
                 <div class="flex w-full sm:w-auto flex-wrap gap-3">
-                    <input type="text" id="searchInput" oninput="filterUsers()" placeholder="Rechercher par nom..." 
+                    <input type="text" id="searchInput" oninput="filterUsers()" placeholder="Nom ou matricule..." 
                         class="px-3 py-2 border border-neutralBorder rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-primary w-full sm:w-48">
                     
                     <select id="roleFilter" onchange="filterUsers()" 
@@ -83,7 +83,6 @@
                     <select id="statusFilter" onchange="filterUsers()" 
                         class="px-3 py-2 border border-neutralBorder rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary">
                         <option value="">Tous les statuts</option>
-                        <option value="en_attente">En attente</option>
                         <option value="actif">Actif</option>
                         <option value="suspendu">Suspendu</option>
                     </select>
@@ -97,6 +96,7 @@
                         <thead>
                             <tr class="border-b border-neutralBorder text-neutralMuted uppercase text-xs font-semibold">
                                 <th class="py-3 px-4">Utilisateur</th>
+                                <th class="py-3 px-4">Matricule</th>
                                 <th class="py-3 px-4">Rôle</th>
                                 <th class="py-3 px-4">Affectation / Classe</th>
                                 <th class="py-3 px-4">Statut</th>
@@ -105,7 +105,7 @@
                         </thead>
                         <tbody id="usersTableBody">
                             <tr>
-                                <td colspan="5" class="text-center py-8 text-neutralMuted">Chargement de la liste des comptes...</td>
+                                <td colspan="6" class="text-center py-8 text-neutralMuted">Chargement de la liste des comptes...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -115,54 +115,67 @@
         </div>
     </main>
 
-    <!-- Create Teacher Modal -->
+    <!-- Create User Modal -->
     <div id="createModal" class="fixed inset-0 bg-neutralText/50 backdrop-blur-sm z-50 flex items-center justify-center hidden">
         <div class="bg-white w-full max-w-md p-6 rounded-2xl border border-neutralBorder shadow-xl relative animate-scale-up">
             <button onclick="closeCreateModal()" class="absolute top-4 right-4 text-neutralMuted hover:text-neutralText">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
             <h3 class="text-lg font-bold text-primary mb-6 flex items-center gap-2">
-                <i data-lucide="user-plus"></i> Créer un compte enseignant
+                <i data-lucide="user-plus"></i> Créer un nouveau compte
             </h3>
 
             <form id="createForm" class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label for="teacherNom" class="block text-xs font-semibold uppercase tracking-wider text-neutralMuted mb-2">Nom</label>
-                        <input id="teacherNom" name="nom" type="text" required 
+                        <label for="userNom" class="block text-xs font-semibold uppercase tracking-wider text-neutralMuted mb-2">Nom</label>
+                        <input id="userNom" name="nom" type="text" required 
                             class="appearance-none rounded-xl relative block w-full px-3 py-3 border border-neutralBorder placeholder-neutralMuted text-neutralText focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm" 
                             placeholder="Ex: SOGLO">
                     </div>
                     <div>
-                        <label for="teacherPrenom" class="block text-xs font-semibold uppercase tracking-wider text-neutralMuted mb-2">Prénom</label>
-                        <input id="teacherPrenom" name="prenom" type="text" required 
+                        <label for="userPrenom" class="block text-xs font-semibold uppercase tracking-wider text-neutralMuted mb-2">Prénom</label>
+                        <input id="userPrenom" name="prenom" type="text" required 
                             class="appearance-none rounded-xl relative block w-full px-3 py-3 border border-neutralBorder placeholder-neutralMuted text-neutralText focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm" 
                             placeholder="Ex: Marc">
                     </div>
                 </div>
 
                 <div>
-                    <label for="teacherEmail" class="block text-xs font-semibold uppercase tracking-wider text-neutralMuted mb-2">Adresse Email</label>
-                    <input id="teacherEmail" name="email" type="email" required 
-                        class="appearance-none rounded-xl relative block w-full px-3 py-3 border border-neutralBorder placeholder-neutralMuted text-neutralText focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm" 
-                        placeholder="marc.soglo@edunetbj.bj">
+                    <label for="userRole" class="block text-xs font-semibold uppercase tracking-wider text-neutralMuted mb-2">Rôle</label>
+                    <select id="userRole" name="role" required onchange="toggleRoleFields()"
+                        class="appearance-none rounded-xl relative block w-full px-3 py-3 border border-neutralBorder text-neutralText bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm">
+                        <option value="" disabled selected>Sélectionnez un rôle</option>
+                        <option value="eleve">Élève</option>
+                        <option value="enseignant">Enseignant</option>
+                        <option value="censeur">Censeur (Administration)</option>
+                    </select>
                 </div>
 
-                <div>
-                    <label for="teacherPassword" class="block text-xs font-semibold uppercase tracking-wider text-neutralMuted mb-2">Mot de passe temporaire</label>
-                    <input id="teacherPassword" name="password" type="text" required 
+                <!-- Field for Students only -->
+                <div id="fieldClasse" class="hidden">
+                    <label for="userClasse" class="block text-xs font-semibold uppercase tracking-wider text-neutralMuted mb-2">Classe</label>
+                    <input id="userClasse" name="classe" type="text" 
                         class="appearance-none rounded-xl relative block w-full px-3 py-3 border border-neutralBorder placeholder-neutralMuted text-neutralText focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm" 
-                        placeholder="Ex: Prof@2026">
+                        placeholder="Ex: 6eme A, 3eme B, Tle D...">
                 </div>
 
-                <div>
-                    <label for="teacherMatiere" class="block text-xs font-semibold uppercase tracking-wider text-neutralMuted mb-2">Matière enseignée</label>
-                    <input id="teacherMatiere" name="matiere" type="text" required 
+                <!-- Field for Teachers only -->
+                <div id="fieldMatiere" class="hidden">
+                    <label for="userMatiere" class="block text-xs font-semibold uppercase tracking-wider text-neutralMuted mb-2">Matière enseignée</label>
+                    <input id="userMatiere" name="matiere" type="text" 
                         class="appearance-none rounded-xl relative block w-full px-3 py-3 border border-neutralBorder placeholder-neutralMuted text-neutralText focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm" 
                         placeholder="Ex: Mathématiques, Français...">
                 </div>
 
-                <div class="pt-4 flex gap-3">
+                <div class="p-3 bg-blue-50 text-primary rounded-xl text-xs flex gap-2 border border-blue-100">
+                    <i data-lucide="info" class="w-4 h-4 shrink-0 mt-0.5"></i>
+                    <div>
+                        <strong>Matricule et mot de passe :</strong> Le matricule unique sera généré automatiquement par le système. Le mot de passe par défaut pour ce compte sera fixé à <strong>000000</strong>.
+                    </div>
+                </div>
+
+                <div class="pt-2 flex gap-3">
                     <button type="button" onclick="closeCreateModal()" class="flex-1 py-3 px-4 bg-neutralBg hover:bg-neutralBorder text-neutralText font-semibold rounded-xl text-sm transition-all">
                         Annuler
                     </button>
@@ -171,6 +184,40 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Success Modal showing generated credentials -->
+    <div id="successModal" class="fixed inset-0 bg-neutralText/60 backdrop-blur-sm z-55 flex items-center justify-center hidden">
+        <div class="bg-white w-full max-w-md p-6 rounded-2xl border border-neutralBorder shadow-2xl text-center space-y-6 animate-scale-up">
+            <div class="w-16 h-16 rounded-full bg-green-100 text-success flex items-center justify-center mx-auto">
+                <i data-lucide="check-circle-2" class="w-10 h-10"></i>
+            </div>
+            <div>
+                <h3 class="text-xl font-bold text-neutralText">Compte créé avec succès !</h3>
+                <p class="text-xs text-neutralMuted mt-1">Veuillez transmettre ces accès temporaires à l'utilisateur.</p>
+            </div>
+            
+            <div class="bg-neutralBg p-4 rounded-xl border border-neutralBorder space-y-3 text-left">
+                <div>
+                    <span class="text-[10px] uppercase font-bold text-neutralMuted">Nom Complet</span>
+                    <p id="successFullName" class="text-sm font-semibold text-neutralText">Kossi Agossou</p>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-neutralMuted">Matricule (Identifiant)</span>
+                        <p id="successMatricule" class="text-base font-bold text-primary tracking-wider">BJ-2026-0002</p>
+                    </div>
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-neutralMuted">Mot de passe temporaire</span>
+                        <p class="text-base font-bold text-secondary tracking-wider">000000</p>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="closeSuccessModal()" class="w-full py-3 px-4 bg-primary hover:bg-primary-light text-white font-semibold rounded-xl text-sm transition-all">
+                Fermer
+            </button>
         </div>
     </div>
 
@@ -183,13 +230,6 @@
 
             const initials = (currentUser.prenom[0] + currentUser.nom[0]).toUpperCase();
             document.getElementById('userAvatarContainer').innerText = initials;
-
-            // Détecter un filtre passé dans l'URL (?filter=pending)
-            const urlParams = new URLSearchParams(window.location.search);
-            const initialFilter = urlParams.get('filter');
-            if (initialFilter === 'pending') {
-                document.getElementById('statusFilter').value = 'en_attente';
-            }
 
             loadUsers();
         }
@@ -205,7 +245,7 @@
             } else {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="5" class="text-center py-8 text-error font-medium">${res.message}</td>
+                        <td colspan="6" class="text-center py-8 text-error font-medium">${res.message}</td>
                     </tr>
                 `;
             }
@@ -218,7 +258,7 @@
             if (users.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="5" class="text-center py-8 text-neutralMuted">Aucun compte trouvé correspondant aux critères.</td>
+                        <td colspan="6" class="text-center py-8 text-neutralMuted">Aucun compte trouvé correspondant aux critères.</td>
                     </tr>
                 `;
                 return;
@@ -230,11 +270,9 @@
                 const roleLabel = Utils.getRoleLabel(u.role);
                 const classOrMatiere = u.role === 'eleve' ? (u.classe ? u.classe.toUpperCase() : 'Non assignée') : (u.matiere || 'Administration');
                 
-                // Colors according to status
+                // Status Badge
                 let statusBadge = '';
-                if (u.statut === 'en_attente') {
-                    statusBadge = '<span class="px-2 py-0.5 bg-yellow-50 text-warning text-xs font-semibold rounded-full border border-yellow-200">En attente</span>';
-                } else if (u.statut === 'actif') {
+                if (u.statut === 'actif') {
                     statusBadge = '<span class="px-2 py-0.5 bg-green-50 text-success text-xs font-semibold rounded-full border border-green-200">Actif</span>';
                 } else {
                     statusBadge = '<span class="px-2 py-0.5 bg-red-50 text-error text-xs font-semibold rounded-full border border-red-200">Suspendu</span>';
@@ -243,13 +281,7 @@
                 // Render actions
                 let actionsHTML = '';
                 if (!isMe) {
-                    if (u.statut === 'en_attente') {
-                        actionsHTML += `
-                            <button onclick="changeStatus(${u.id}, 'actif')" class="px-2 py-1 bg-green-50 hover:bg-green-100 text-success text-xs font-semibold rounded-lg border border-green-200 transition-all">
-                                Activer
-                            </button>
-                        `;
-                    } else if (u.statut === 'actif') {
+                    if (u.statut === 'actif') {
                         actionsHTML += `
                             <button onclick="changeStatus(${u.id}, 'suspendu')" class="px-2 py-1 bg-red-50 hover:bg-red-100 text-error text-xs font-semibold rounded-lg border border-red-200 transition-all">
                                 Suspendre
@@ -258,13 +290,19 @@
                     } else {
                         actionsHTML += `
                             <button onclick="changeStatus(${u.id}, 'actif')" class="px-2 py-1 bg-green-50 hover:bg-green-100 text-success text-xs font-semibold rounded-lg border border-green-200 transition-all">
-                                Réactiver
+                                Activer
                             </button>
                         `;
                     }
+                    // Reset password button
+                    actionsHTML += `
+                        <button onclick="resetPassword(${u.id})" class="p-1.5 hover:bg-yellow-50 text-warning rounded-lg transition-all ml-1.5" title="Réinitialiser le mot de passe à 000000">
+                            <i data-lucide="key-round" class="w-4 h-4 inline"></i>
+                        </button>
+                    `;
                     // Delete account button
                     actionsHTML += `
-                        <button onclick="deleteAccount(${u.id})" class="p-1 hover:bg-red-50 text-error rounded-lg transition-all ml-1.5" title="Supprimer définitivement">
+                        <button onclick="deleteAccount(${u.id})" class="p-1.5 hover:bg-red-50 text-error rounded-lg transition-all" title="Supprimer définitivement">
                             <i data-lucide="trash-2" class="w-4 h-4 inline"></i>
                         </button>
                     `;
@@ -276,12 +314,12 @@
                     <tr class="border-b border-neutralBorder hover:bg-neutralBg/20 transition-all text-xs md:text-sm">
                         <td class="py-3 px-4 font-bold text-neutralText">
                             ${Utils.escapeHTML(u.prenom)} ${Utils.escapeHTML(u.nom)}
-                            <div class="text-[10px] text-neutralMuted font-normal mt-0.5">${Utils.escapeHTML(u.email)}</div>
                         </td>
+                        <td class="py-3 px-4 font-mono font-semibold text-primary select-all">${Utils.escapeHTML(u.matricule)}</td>
                         <td class="py-3 px-4 capitalize font-semibold text-neutralText">${roleLabel}</td>
                         <td class="py-3 px-4 text-neutralMuted">${classOrMatiere}</td>
                         <td class="py-3 px-4">${statusBadge}</td>
-                        <td class="py-3 px-4 text-right">${actionsHTML}</td>
+                        <td class="py-3 px-4 text-right flex items-center justify-end gap-1.5">${actionsHTML}</td>
                     </tr>
                 `;
             });
@@ -295,13 +333,39 @@
             const status = document.getElementById('statusFilter').value;
 
             const filtered = allUsers.filter(u => {
-                const matchSearch = u.nom.toLowerCase().includes(search) || u.prenom.toLowerCase().includes(search) || u.email.toLowerCase().includes(search);
+                const matchSearch = u.nom.toLowerCase().includes(search) || u.prenom.toLowerCase().includes(search) || u.matricule.toLowerCase().includes(search);
                 const matchRole = role === '' || u.role === role;
                 const matchStatus = status === '' || u.statut === status;
                 return matchSearch && matchRole && matchStatus;
             });
 
             renderUsers(filtered);
+        }
+
+        // Toggle form fields based on selected role
+        function toggleRoleFields() {
+            const role = document.getElementById('userRole').value;
+            const fieldClasse = document.getElementById('fieldClasse');
+            const fieldMatiere = document.getElementById('fieldMatiere');
+            const userClasse = document.getElementById('userClasse');
+            const userMatiere = document.getElementById('userMatiere');
+
+            if (role === 'eleve') {
+                fieldClasse.classList.remove('hidden');
+                fieldMatiere.classList.add('hidden');
+                userClasse.setAttribute('required', 'required');
+                userMatiere.removeAttribute('required');
+            } else if (role === 'enseignant') {
+                fieldClasse.classList.add('hidden');
+                fieldMatiere.classList.remove('hidden');
+                userClasse.removeAttribute('required');
+                userMatiere.setAttribute('required', 'required');
+            } else {
+                fieldClasse.classList.add('hidden');
+                fieldMatiere.classList.add('hidden');
+                userClasse.removeAttribute('required');
+                userMatiere.removeAttribute('required');
+            }
         }
 
         // Change Status (Activate/Suspend)
@@ -315,15 +379,29 @@
             }
         }
 
+        // Reset Password to 000000
+        async function resetPassword(id) {
+            if (!confirm("Voulez-vous vraiment réinitialiser le mot de passe de cet utilisateur à '000000' ? Il devra obligatoirement le changer à sa prochaine connexion.")) {
+                return;
+            }
+
+            const res = await API.postData(`/admin/users/${id}/reset-password`, {});
+            if (res.success) {
+                Utils.showToast("Mot de passe réinitialisé à '000000' avec succès.", "success");
+            } else {
+                Utils.showToast(res.message, "error");
+            }
+        }
+
         // Delete Account
         async function deleteAccount(id) {
-            if (!confirm("Voulez-vous vraiment supprimer cet utilisateur ? Cette action est irréversible et supprimera toutes ses données associées (notes, cours, messages, etc.).")) {
+            if (!confirm("Voulez-vous vraiment supprimer définitivement cet utilisateur ? Son matricule ne sera plus jamais réutilisé et ses données associées seront supprimées. Cette action est irréversible !")) {
                 return;
             }
 
             const res = await API.delete(`/admin/users/${id}`);
             if (res.success) {
-                Utils.showToast("Compte supprimé avec succès.", "success");
+                Utils.showToast("Compte supprimé définitivement.", "success");
                 loadUsers();
             } else {
                 Utils.showToast(res.message, "error");
@@ -334,27 +412,37 @@
         document.getElementById('createForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const nom = document.getElementById('teacherNom').value.trim();
-            const prenom = document.getElementById('teacherPrenom').value.trim();
-            const email = document.getElementById('teacherEmail').value.trim();
-            const password = document.getElementById('teacherPassword').value.trim();
-            const matiere = document.getElementById('teacherMatiere').value.trim();
+            const nom = document.getElementById('userNom').value.trim();
+            const prenom = document.getElementById('userPrenom').value.trim();
+            const role = document.getElementById('userRole').value;
+            const classe = document.getElementById('userClasse').value.trim();
+            const matiere = document.getElementById('userMatiere').value.trim();
             const submitBtn = document.getElementById('createBtn');
 
-            if (!nom || !prenom || !email || !password || !matiere) {
-                Utils.showToast("Veuillez remplir tous les champs.", "error");
+            if (!nom || !prenom || !role) {
+                Utils.showToast("Veuillez remplir les champs obligatoires.", "error");
                 return;
             }
 
             submitBtn.disabled = true;
             submitBtn.innerText = "Création...";
 
-            const res = await API.postData('/admin/users', { nom, prenom, email, password, matiere });
+            const payload = { nom, prenom, role };
+            if (role === 'eleve') payload.classe = classe;
+            if (role === 'enseignant') payload.matiere = matiere;
+
+            const res = await API.postData('/admin/users', payload);
 
             if (res.success) {
-                Utils.showToast("Compte enseignant créé avec succès !", "success");
                 closeCreateModal();
                 document.getElementById('createForm').reset();
+                toggleRoleFields();
+                
+                // Show success modal with generated credentials
+                document.getElementById('successFullName').innerText = `${prenom} ${nom}`;
+                document.getElementById('successMatricule').innerText = res.data.matricule;
+                document.getElementById('successModal').classList.remove('hidden');
+                
                 loadUsers();
             } else {
                 Utils.showToast(res.message, "error");
@@ -366,10 +454,15 @@
         // Modals management
         function openCreateModal() {
             document.getElementById('createForm').reset();
+            toggleRoleFields();
             document.getElementById('createModal').classList.remove('hidden');
         }
         function closeCreateModal() {
             document.getElementById('createModal').classList.add('hidden');
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('successModal').classList.add('hidden');
         }
     </script>
 </body>

@@ -12,7 +12,7 @@ if ($method === 'GET' && $sub_uri === '/me') {
             'id' => $user['id'],
             'nom' => $user['nom'],
             'prenom' => $user['prenom'],
-            'email' => $user['email'],
+            'matricule' => $user['matricule'],
             'role' => $user['role'],
             'classe' => $user['classe'],
             'matiere' => $user['matiere'],
@@ -32,22 +32,9 @@ if ($method === 'GET' && ($sub_uri === '' || $sub_uri === '/')) {
 if ($method === 'PUT' && $sub_uri === '/me') {
     $nom = trim($input['nom'] ?? $user['nom']);
     $prenom = trim($input['prenom'] ?? $user['prenom']);
-    $email = trim($input['email'] ?? $user['email']);
 
-    if (empty($nom) || empty($prenom) || empty($email)) {
-        json_error("Le nom, le prénom et l'email ne peuvent pas être vides.");
-    }
-
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        json_error("Format d'email invalide.");
-    }
-
-    if ($email !== $user['email']) {
-        $stmt = $db->prepare("SELECT id FROM users WHERE email = ? AND id != ?");
-        $stmt->execute([$email, $user['id']]);
-        if ($stmt->fetch()) {
-            json_error("Cet email est déjà utilisé par un autre compte.");
-        }
+    if (empty($nom) || empty($prenom)) {
+        json_error("Le nom et le prénom ne peuvent pas être vides.");
     }
 
     $avatar_url = $user['avatar'];
@@ -59,15 +46,15 @@ if ($method === 'PUT' && $sub_uri === '/me') {
         $avatar_url = $upload_result['url'];
     }
 
-    $stmt = $db->prepare("UPDATE users SET nom = ?, prenom = ?, email = ?, avatar = ? WHERE id = ?");
-    $stmt->execute([$nom, $prenom, $email, $avatar_url, $user['id']]);
+    $stmt = $db->prepare("UPDATE users SET nom = ?, prenom = ?, avatar = ? WHERE id = ?");
+    $stmt->execute([$nom, $prenom, $avatar_url, $user['id']]);
 
     json_success("Profil mis à jour avec succès", [
         'user' => [
             'id' => $user['id'],
             'nom' => $nom,
             'prenom' => $prenom,
-            'email' => $email,
+            'matricule' => $user['matricule'],
             'role' => $user['role'],
             'classe' => $user['classe'],
             'matiere' => $user['matiere'],
@@ -83,6 +70,14 @@ if ($method === 'PUT' && $sub_uri === '/me/password') {
 
     if (empty($current_password) || empty($new_password)) {
         json_error("Le mot de passe actuel et le nouveau mot de passe sont requis.");
+    }
+
+    if (strlen($new_password) < 6) {
+        json_error("Le nouveau mot de passe doit contenir au moins 6 caractères.");
+    }
+
+    if ($new_password === '000000') {
+        json_error("Le mot de passe ne peut pas être '000000'.");
     }
 
     $stmt = $db->prepare("SELECT password FROM users WHERE id = ?");
