@@ -43,7 +43,7 @@ try {
         for ($i=1; $i<=2; $i++) {
             list($nom, $prenom) = getName();
             $mat = getMat();
-            $stmt = $pdo->prepare("INSERT INTO users (matricule, nom, prenom, password, role, matiere, statut, premier_connexion) VALUES (?, ?, ?, ?, 'enseignant', ?, 'actif', 0)");
+            $stmt = $pdo->prepare("INSERT INTO users (matricule, nom, prenom, password, role, matiere, statut, premier_connexion) VALUES (?, ?, ?, ?, 'enseignant', ?, 'actif', 1)");
             $stmt->execute([$mat, $nom, $prenom, $pass, $matiere]);
             $teacher_id = $pdo->lastInsertId();
             $teachers_data[] = ['id' => $teacher_id, 'matricule' => $mat, 'nom' => $nom, 'prenom' => $prenom, 'matiere' => $matiere];
@@ -55,7 +55,7 @@ try {
         for ($i=1; $i<=5; $i++) {
             list($nom, $prenom) = getName();
             $mat = getMat();
-            $stmt = $pdo->prepare("INSERT INTO users (matricule, nom, prenom, password, role, classe, statut, premier_connexion) VALUES (?, ?, ?, ?, 'eleve', ?, 'actif', 0)");
+            $stmt = $pdo->prepare("INSERT INTO users (matricule, nom, prenom, password, role, classe, statut, premier_connexion) VALUES (?, ?, ?, ?, 'eleve', ?, 'actif', 1)");
             $stmt->execute([$mat, $nom, $prenom, $pass, $classe]);
             $student_id = $pdo->lastInsertId();
             $students_data[] = ['id' => $student_id, 'matricule' => $mat, 'nom' => $nom, 'prenom' => $prenom, 'classe' => $classe];
