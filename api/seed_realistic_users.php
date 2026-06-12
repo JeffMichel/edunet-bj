@@ -18,7 +18,7 @@ try {
         return 'BJ-2026-' . str_pad($mat_counter, 4, '0', STR_PAD_LEFT);
     }
 
-    $pass = password_hash('password123', PASSWORD_BCRYPT);
+    $pass = password_hash('000000', PASSWORD_BCRYPT);
 
     $noms = ['DOSSA', 'ADJANOHOUN', 'KIKI', 'HOUENOU', 'ZINSOU', 'AGBO', 'MENSAH', 'DANSOU', 'HOUNGBEDJI', 'SOGLO', 'YOMI', 'D ALMEIDA', 'BIO', 'CHABI', 'TCHABI', 'KPADONOU', 'VODONOU', 'LOKO'];
     $prenoms_m = ['Koffi', 'Kossi', 'Kwame', 'Setondji', 'Mahougnon', 'Gbedonougbo', 'Jean', 'Paul', 'Marc', 'Luc', 'Eric', 'Alain'];
