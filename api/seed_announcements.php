@@ -29,24 +29,24 @@ try {
 
     $general_announcements = [
         [
-            "titre" => "Bienvenue pour cette nouvelle rentrée !",
-            "contenu" => "Toute l'équipe d'EduNet BJ vous souhaite une excellente année scolaire. N'oubliez pas de consulter régulièrement votre emploi du temps et vos devoirs."
+            "titre" => "Bienvenue pour cette nouvelle rentree !",
+            "contenu" => "Toute l equipe d EduNet BJ vous souhaite une excellente annee scolaire. N oubliez pas de consulter regulierement votre emploi du temps et vos devoirs."
         ],
         [
             "titre" => "Fermeture exceptionnelle ce vendredi",
-            "contenu" => "En raison de travaux de maintenance sur le réseau électrique de l'établissement, les cours de l'après-midi seront suspendus ce vendredi."
+            "contenu" => "En raison de travaux de maintenance sur le reseau electrique de l etablissement, les cours de l apres-midi seront suspendus ce vendredi."
         ],
         [
-            "titre" => "Réunion des parents d'élèves",
-            "contenu" => "La première réunion de rencontre parents-professeurs se tiendra le samedi de la semaine prochaine à partir de 8h00 dans la grande salle de conférence."
+            "titre" => "Reunion des parents d eleves",
+            "contenu" => "La premiere reunion de rencontre parents-professeurs se tiendra le samedi de la semaine prochaine a partir de 8h00 dans la grande salle de conference."
         ],
         [
-            "titre" => "Nouvelles mesures de sécurité",
-            "contenu" => "Il est rappelé à tous les élèves de respecter le règlement intérieur concernant la tenue vestimentaire et la ponctualité."
+            "titre" => "Nouvelles mesures de securite",
+            "contenu" => "Il est rappele a tous les eleves de respecter le reglement interieur concernant la tenue vestimentaire et la ponctualite."
         ],
         [
-            "titre" => "Ouverture de la bibliothèque",
-            "contenu" => "La bibliothèque de l'établissement a reçu de nouveaux ouvrages. Elle sera désormais ouverte jusqu'à 18h tous les jours ouvrables."
+            "titre" => "Ouverture de la bibliotheque",
+            "contenu" => "La bibliotheque de l etablissement a recu de nouveaux ouvrages. Elle sera desormais ouverte jusqu a 18h tous les jours ouvrables."
         ]
     ];
 
@@ -65,8 +65,8 @@ try {
         "Rappel pour le devoir",
         "Absence exceptionnelle",
         "Travail de groupe",
-        "Excursion pédagogique",
-        "Matériel requis"
+        "Excursion pedagogique",
+        "Materiel requis"
     ];
 
     // Insert specific announcements per class
