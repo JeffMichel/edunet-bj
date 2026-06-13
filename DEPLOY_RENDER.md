@@ -25,8 +25,8 @@ La base de données MySQL est hébergée sur **Aiven.io** et toutes les tables s
 | **Password** | *(voir `.env` local)* |
 
 **Compte Admin par défaut :**
-- **Matricule** : `BJ-2026-0001`
-- **Mot de passe** : `EduNet@BJ_Adm1n!2026#S3cur3`
+- **Matricule** : `ADMIN-EDN-2026`
+- **Mot de passe** : `EduN3t@BJ#R00t!2026Adm`
 
 > ⚠️ Tous les comptes utilisateurs (élèves, enseignants, censeur) sont créés **uniquement par l'administrateur** depuis l'interface Admin. Il n'y a pas d'inscription publique.
 
@@ -99,8 +99,8 @@ Une fois déployé, l'URL sera : `https://edunet-bj.onrender.com` (ou similaire)
 - **API** : `https://edunet-bj.onrender.com/api/`
 
 **Connexion Admin :**
-- Matricule : `BJ-2026-0001`
-- Mot de passe : `EduNet@BJ_Adm1n!2026#S3cur3`
+- Matricule : `ADMIN-EDN-2026`
+- Mot de passe : `EduN3t@BJ#R00t!2026Adm`
 
 ---
 

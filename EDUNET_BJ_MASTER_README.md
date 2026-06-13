@@ -260,9 +260,9 @@ CREATE TABLE reports (
   FOREIGN KEY (cible_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Compte admin par défaut (matricule: BJ-2026-0001 / mot de passe: EduNet@BJ_Adm1n!2026#S3cur3 — premier_connexion=0 car admin ne change pas)
+-- Compte admin par défaut (matricule: ADMIN-EDN-2026 / mot de passe: EduN3t@BJ#R00t!2026Adm — premier_connexion=0 car admin ne change pas)
 INSERT INTO users (matricule, nom, prenom, password, role, statut, premier_connexion)
-VALUES ('BJ-2026-0001', 'Admin', 'EduNet', '$2y$10$mZEzkZlRzXBb8GAC9ymAcOZucAUeuYUdnZLCvGcoTJcpE6.xjG4Dm', 'admin', 'actif', 0);
+VALUES ('ADMIN-EDN-2026', 'Admin', 'EduNet', '$2y$10$HpBdcKQa/M98WWBAAnCcuOo2Tj.iSnzkMwRI6eZO46NhZ18PM980K', 'admin', 'actif', 0);
 ```
 
 ---
@@ -714,22 +714,22 @@ mysql -u root -p < database/schema.sql
 # 2. Lancer le serveur PHP intégré
 cd api && php -S localhost:8000
 
-# 3. Tester le login admin (matricule BJ-2026-0001)
+# 3. Tester le login admin (matricule ADMIN-EDN-2026)
 curl -X POST http://localhost:8000/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"matricule":"BJ-2026-0001","password":"EduNet@BJ_Adm1n!2026#S3cur3"}'
+  -d '{"matricule":"ADMIN-EDN-2026","password":"EduN3t@BJ#R00t!2026Adm"}'
 
 # 4. Créer un compte élève via l'admin (doit retourner le matricule généré)
 curl -X POST http://localhost:8000/admin/users \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <token_admin>" \
   -d '{"nom":"Agossou","prenom":"Kossi","role":"eleve","classe":"3eme A"}'
-# Réponse attendue: { "matricule": "BJ-2026-0002", "mot_de_passe_defaut": "000000" }
+# Réponse attendue: { "matricule": "BJ-2026-0001", "mot_de_passe_defaut": "000000" }
 
 # 5. Tester le login du nouvel élève (doit retourner premier_connexion: true)
 curl -X POST http://localhost:8000/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"matricule":"BJ-2026-0002","password":"000000"}'
+  -d '{"matricule":"BJ-2026-0001","password":"000000"}'
 ```
 
 ---

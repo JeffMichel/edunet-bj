@@ -91,5 +91,5 @@ Vous pouvez ensuite accéder au site via **`http://client.edunetbj.local`**.
 ---
 
 ## Identifiants de test administrateur
-*   **Matricule** : `BJ-2026-0001`
-*   **Mot de passe** : `EduNet@BJ_Adm1n!2026#S3cur3`
+*   **Matricule** : `ADMIN-EDN-2026`
+*   **Mot de passe** : `EduN3t@BJ#R00t!2026Adm`

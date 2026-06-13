@@ -127,12 +127,12 @@ CREATE TABLE reports (
 );
 
 -- Compte admin par défaut
--- Matricule : BJ-2026-0001
--- Mot de passe : EduNet@BJ_Adm1n!2026#S3cur3
+-- Matricule : ADMIN-EDN-2026
+-- Mot de passe : EduN3t@BJ#R00t!2026Adm
 INSERT INTO users (matricule, nom, prenom, password, role, statut, premier_connexion)
-VALUES ('BJ-2026-0001', 'Admin', 'EduNet', '$2y$10$mZEzkZlRzXBb8GAC9ymAcOZucAUeuYUdnZLCvGcoTJcpE6.xjG4Dm', 'admin', 'actif', 0);
+VALUES ('ADMIN-EDN-2026', 'Admin', 'EduNet', '$2y$10$HpBdcKQa/M98WWBAAnCcuOo2Tj.iSnzkMwRI6eZO46NhZ18PM980K', 'admin', 'actif', 0);
 
--- Initialiser le compteur de matricules pour l'année 2026 à 1 (puisque l'admin utilise déjà le 0001)
+-- Initialiser le compteur de matricules pour l'année 2026 à 0 (puisque l'admin utilise un format séparé)
 INSERT INTO matricule_counter (annee, dernier_numero)
-VALUES (2026, 1);
+VALUES (2026, 0);
 
