@@ -25,7 +25,13 @@ function loadEnv($path) {
 }
 
 // Charger .env depuis la racine (2 niveaux au-dessus de api/config/config.php)
-loadEnv(__DIR__ . '/../../.env');
+// Priorité : .env.local (dev local) > .env (production)
+$root = __DIR__ . '/../../';
+if (file_exists($root . '.env.local')) {
+    loadEnv($root . '.env.local'); // Environnement local WAMP
+} else {
+    loadEnv($root . '.env');       // Environnement production (Render/Aiven)
+}
 
 // Fonction robuste pour récupérer les variables d'environnement
 function get_env_var($key, $default = null) {

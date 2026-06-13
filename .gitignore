@@ -3,3 +3,6 @@ node_modules/
 *.log
 api/uploads/*
 !api/uploads/.gitkeep
+
+# Environnement local (ne pas committer)
+.env.local
