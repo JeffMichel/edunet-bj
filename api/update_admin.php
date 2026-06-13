@@ -1,19 +1,26 @@
 <?php
-require_once __DIR__ . '/config/config.php';
-require_once __DIR__ . '/config/database.php';
+// Standalone admin updater - no framework includes needed
+$host = 'localhost';
+$db   = 'edunet_bj';
+$user = 'root';
+$pass = '';
 
-$new_matricule = 'ADMIN-EDN-2026';
-$new_password  = 'EduN3t@BJ#R00t!2026$S3cur3&Adm';
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-$pdo  = Database::getConnection();
-$hash = password_hash($new_password, PASSWORD_BCRYPT);
+    $new_matricule = 'ADMIN-EDN-2026';
+    $new_password  = 'EduN3t@BJ#R00t!2026Adm';
+    $hash = password_hash($new_password, PASSWORD_BCRYPT);
 
-$stmt = $pdo->prepare("UPDATE users SET matricule = ?, password = ?, premier_connexion = 0 WHERE role = 'admin' LIMIT 1");
-$stmt->execute([$new_matricule, $hash]);
+    $stmt = $pdo->prepare("UPDATE users SET matricule = ?, password = ?, premier_connexion = 0 WHERE role = 'admin' LIMIT 1");
+    $stmt->execute([$new_matricule, $hash]);
 
-echo json_encode([
-    "status"     => "success",
-    "matricule"  => $new_matricule,
-    "password"   => $new_password,
-    "message"    => "Identifiants admin mis a jour avec succes."
-]);
+    echo json_encode([
+        "status"    => "success",
+        "matricule" => $new_matricule,
+        "password"  => $new_password
+    ]);
+} catch (Exception $e) {
+    echo json_encode(["status" => "error", "message" => $e->getMessage()]);
+}
