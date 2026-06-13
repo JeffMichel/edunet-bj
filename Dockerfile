@@ -23,3 +23,8 @@ RUN sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/Allo
 
 # Exposer le port par défaut d'Apache
 EXPOSE 80
+
+# Configurer l'entrypoint pour lancer les scripts de démarrage
+COPY entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["entrypoint.sh"]
