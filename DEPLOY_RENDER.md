@@ -104,6 +104,22 @@ Une fois déployé, l'URL sera : `https://edunet-bj.onrender.com` (ou similaire)
 
 ---
 
+## 🤖 Mise à jour et Déploiement automatique
+
+### 1. Synchronisation automatique de la Base de Données
+Le conteneur Docker utilise un script de démarrage (`entrypoint.sh`) qui exécute automatiquement le script de mise à jour `api/update_admin.php` à chaque démarrage du service sur Render. 
+- Cela garantit que les nouveaux identifiants administrateur complexes (`ADMIN-EDN-2026`) et toutes les futures modifications de structure de base de données sont **automatiquement appliqués sur la base Aiven** à chaque déploiement ou redémarrage du conteneur, sans action manuelle requise.
+
+### 2. Déploiement automatique (Git Push)
+Un workflow GitHub Action est configuré dans `.github/workflows/deploy.yml` pour automatiser les déploiements de code.
+Pour l'activer :
+1. Allez dans les paramètres de votre service sur le tableau de bord Render (Settings) et copiez l'URL du **Deploy Hook**.
+2. Allez sur votre dépôt GitHub : **Settings** -> **Secrets and variables** -> **Actions** -> **New repository secret**.
+3. Nommez le secret **`RENDER_DEPLOY_HOOK`** et collez l'URL copiée.
+4. À chaque `git push` sur la branche `main`, le déploiement sur Render sera automatiquement déclenché !
+
+---
+
 ## Flux de connexion
 
 ```
